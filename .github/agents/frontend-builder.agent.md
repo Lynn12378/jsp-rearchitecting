@@ -1,7 +1,7 @@
 ---
 name: frontend-builder
 description: "Use when: 需要建立 Vue 3 + Quasar + 國泰元件庫前端頁面、依 /spec Task Execution brief 實作 pageSpec、整合 OpenAPI/mock service、更新 router/NavCollection；spec 流程與新檔案必定執行 frontend-code-review。觸發詞：前端建構、frontend builder、Vue 頁面、Cxl 元件、OpenAPI mock。"
-version: "1.6.5" # 語義化版本號 (Semantic Versioning)
+version: "1.6.6" # 語義化版本號 (Semantic Versioning)
 id: "frontend-builder.agent" # 唯一的Prompt識別碼
 author: "張立賢" # 作者
 type: "agent" # 分類
@@ -20,7 +20,7 @@ tag: [
     "shared-component-protection",
   ] # 相關標籤
 created_date: "2026-03-03" # 建立日期
-last_modified: "2026-07-06" # 最後修改日期
+last_modified: "2026-07-20" # 最後修改日期
 tools: [read, search, edit, execute, agent, todo]
 agents: [frontend-code-review]
 ---
@@ -196,7 +196,7 @@ agents: [frontend-code-review]
    需求理解：
    {簡短描述理解到的功能需求}
 
-   疑問（若有，最多 3 個）：
+   疑問：
    - {不清楚的地方}
 
    預計操作：
