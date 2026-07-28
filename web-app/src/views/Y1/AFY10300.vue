@@ -1083,7 +1083,7 @@ const onLinkATA00611 = () => {
  * 初始頁面載入，取得下拉選項與初始查詢狀態
  */
 const fetchInitialState = async () => {
-  const resp = await $cathayAxios.get(afy10300Service.query);
+  const resp = await $cathayAxios.post(afy10300Service.prompt, {});
   if (resp.returnCode !== 0) {
     return;
   }

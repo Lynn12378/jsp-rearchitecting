@@ -1,4 +1,4 @@
 export default {
-  export: "/api/AFY1_0400/export",
-  download: "/api/AFY1_0400/download",
+  export: "/afy10400/export",
+  download: "/afy10400/download",
 };

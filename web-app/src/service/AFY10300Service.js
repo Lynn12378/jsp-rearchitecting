@@ -1,7 +1,8 @@
 export default {
-  query: "/api/AFY1_0300/query",
-  edit: "/api/AFY1_0300/edit",
-  export: "/api/AFY1_0300/export",
-  import: "/api/AFY1_0300/import",
-  execute: "/api/AFY1_0300/execute",
+  prompt: "/afy10300/prompt",
+  query: "/afy10300/query",
+  edit: "/afy10300/edit",
+  export: "/afy10300/export",
+  import: "/afy10300/import",
+  execute: "/afy10300/execute",
 };

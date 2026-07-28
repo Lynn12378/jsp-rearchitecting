@@ -1,6 +1,6 @@
 export default {
-  queryList: "/api/ATA0_8110/prompt",
-  insert: "/api/ATA0_8110/insert",
-  update: "/api/ATA0_8110/update",
-  delete: "/api/ATA0_8110/doDelete",
+  queryList: "/ata08110/prompt",
+  insert: "/ata08110/insert",
+  update: "/ata08110/update",
+  delete: "/ata08110/delete",
 };

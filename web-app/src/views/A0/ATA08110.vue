@@ -316,7 +316,7 @@ const onInsert = async () => {
  * 查詢公會通報設定清單(Contract A / Contract E)
  */
 const fetchList = async () => {
-  const resp = await $cathayAxios.get(ata08110Service.queryList);
+  const resp = await $cathayAxios.post(ata08110Service.queryList, {});
   if (resp.returnCode !== 0) {
     return;
   }
@@ -341,13 +341,13 @@ const fetchList = async () => {
  */
 const insertItem = async () => {
   const resp = await $cathayAxios.post(ata08110Service.insert, {
-    SRC_NEW: srcNew.value,
-    TIMEOUT_NEW: timeoutNew.value,
-    CALL_ASSO_NEW: callAssoNew.value,
-    URL_NEW: urlNew.value,
-    MAXAMT_NEW: maxamtNew.value,
-    CONNECT_TIMEOUT_NEW: connectTimeoutNew.value,
-    RETRY_NEW: retryNew.value,
+    srcNew: srcNew.value,
+    timeoutNew: timeoutNew.value,
+    callAssoNew: callAssoNew.value,
+    urlNew: urlNew.value,
+    maxAmtNew: maxamtNew.value,
+    connectTimeoutNew: connectTimeoutNew.value,
+    retryNew: retryNew.value,
   });
 
   if (resp.returnCode !== 0) {

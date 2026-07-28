@@ -29,17 +29,17 @@ const customHeaders = {
   },
   post: {
     Accept: "application/json",
-    "Content-Type": "application/x-www-form-urlencoded;charset=big5",
+    "Content-Type": "application/json;charset=utf-8",
     "X-Requested-With": "XMLHttpRequest",
   },
   put: {
     Accept: "application/json",
-    "Content-Type": "application/x-www-form-urlencoded;charset=big5",
+    "Content-Type": "application/json;charset=utf-8",
     "X-Requested-With": "XMLHttpRequest",
   },
   delete: {
     Accept: "application/json",
-    "Content-Type": "application/x-www-form-urlencoded;charset=big5",
+    "Content-Type": "application/json;charset=utf-8",
     "X-Requested-With": "XMLHttpRequest",
   },
 };
@@ -108,11 +108,11 @@ cathayAxios.interceptors.response.use(
       }
 
       if (
-        response.data.ErrMsg.msgDesc &&
-        response.data.ErrMsg.msgmsgDesc.length > 0 &&
+        response.data.msg &&
+        response.data.msg.length > 0 &&
         showRtnMessage
       ) {
-        $notifySuccessMethod(response.data.ErrMsg.msgDesc);
+        $notifySuccessMethod(response.data.msg);
       }
       return response.data;
     }
@@ -123,7 +123,7 @@ cathayAxios.interceptors.response.use(
 
     if (showRtnMessage) {
       $notifyErrorMethod(
-        response.data.ErrMsg.msgDesc || "伺服器維護中，請稍候再試!",
+        response.data.msg || "伺服器維護中，請稍候再試!",
       );
     }
     return response.data;
@@ -253,19 +253,19 @@ export default {
       })
       .then((response) => {
         tryHideFullScreenLoading();
-        if (response.data && response.data.ErrMsg.returnCode == 0) {
+        if (response.data && response.data.returnCode == 0) {
           if (
-            response.data.ErrMsg.msgDesc &&
-            response.data.ErrMsg.msgDesc.length > 0 &&
+            response.data.msg &&
+            response.data.msg.length > 0 &&
             showRtnMessage
           ) {
-            $notifySuccessMethod(response.data.ErrMsg.msgDesc);
+            $notifySuccessMethod(response.data.msg);
           }
           return Promise.resolve(response.data);
         }
 
         if (showRtnMessage) {
-          $notifyErrorMethod(response.data.ErrMsg.msgDesc);
+          $notifyErrorMethod(response.data.msg);
         }
         return Promise.resolve(response.data);
       })
