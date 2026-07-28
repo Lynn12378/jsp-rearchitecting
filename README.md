@@ -1,1 +1,1 @@
-# jsp-rearchitecting
+# jsp-reengineering
