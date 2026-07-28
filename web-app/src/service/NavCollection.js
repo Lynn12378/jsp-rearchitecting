@@ -1,11 +1,15 @@
 const nav = [
   {
-    label: "模板選單請修改",
+    label: "公會通報作業",
     icon: "cub-icon-home_40_m",
     items: [
       {
-        label: "模板次選單-請修改",
-        url: "/MI/DSMI0100",
+        label: "公會通報設定",
+        url: "/A0/ATA08110",
+      },
+      {
+        label: "公會補通報作業",
+        url: "/Y1/AFY10300",
       },
     ],
   },
