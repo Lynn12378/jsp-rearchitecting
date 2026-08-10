@@ -13,9 +13,19 @@ const routes = [
     ]
   },
   {
-    path: "/",
+    path: "/A0",
     component: BaseLayout,
-  }
+    children: [
+      // TODO
+    ]
+  },
+  {
+    path: "/Y1",
+    component: BaseLayout,
+    children: [
+      // TODO
+    ]
+  },
 ];
 
 export default { routes };
