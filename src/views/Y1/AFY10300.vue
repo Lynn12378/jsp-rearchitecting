@@ -618,10 +618,18 @@ const resultColumns = computed(() => {
  * @param {object[]} options - 後端代碼表
  * @returns {{label: string, value: string}[]} 下拉選項
  */
-const normalizeOptions = (options = []) => options.map((option) => ({
-  label: `${option.key} ${option.value}`,
-  value: option.key,
-}));
+const normalizeOptions = (options) => {
+  if (!options) return [];
+
+  const entries = Array.isArray(options)
+    ? options.map((option) => [option.key, option.value])
+    : Object.entries(options);
+
+  return entries.map(([key, value]) => ({
+    label: `${key} ${value}`,
+    value: key,
+  }));
+};
 
 /**
  * 取得動態欄位的選項清單。
@@ -679,7 +687,7 @@ const applyServerData = (data) => {
   setValues({
     queryNo: String(data.queryNo ?? "0"),
     idNo: data.idNo ?? "",
-    insrDate: "",
+    insrDate: data.insrDate ?? "",
     errorCode: String(data.errorCode ?? "99"),
     insrType: data.insrType ?? "L",
     prodType: data.prodType ?? "AT",
@@ -700,7 +708,7 @@ const applyServerData = (data) => {
   });
 
   showQuery.value = Boolean(data.showQuery);
-  isRType.value = Boolean(data.isRType);
+  isRType.value = Boolean(data.rtype);
   saleChnlOptions.value = normalizeOptions(data.SALE_CHNL_OPTION);
   policyDutyOptions.value = normalizeOptions(data.POLICY_DUTY_OPTION);
   prodKindOptions.value = normalizeOptions(data.PROD_KIND_OPTION);

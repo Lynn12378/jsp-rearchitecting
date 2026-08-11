@@ -4,5 +4,5 @@ export default {
   edit: "afy10300/edit",
   export: "afy10300/export",
   import: "afy10300/import",
-  execute: "afy10300/execute",
+  execute: "afy10300/executebatch",
 };
