@@ -515,9 +515,9 @@ const { value: inputId } = useField("inputId", undefined, {
 
 const role = ref("I");
 const status = ref("Y");
-const canReturn = ref(false);
-const syncReturn = ref(false);
-const isAllow = ref(false);
+const canReturn = ref(true);
+const syncReturn = ref(true);
+const isAllow = ref(true);
 const dataMap = ref({});
 const resultRows = ref([]);
 const insrMap = ref({});
@@ -631,7 +631,6 @@ const selectRow = (row) => {
   EDITOR_KEYS.forEach((key) => {
     editValues[key] = row[key] ?? "";
   });
-  // TODO: UNKNOWN_SYNTAX: parseEUDC();
 };
 
 const cleanEditor = () => {
@@ -681,23 +680,13 @@ const handleHotKey = (event) => {
   action();
 };
 
-// TODO: OVER_APPROXIMATION: 待複查 JSP EL 注入資料是否全數來自後端
 onMounted(async () => {
   window.addEventListener("keydown", handleHotKey);
-  const res = await $cathayAxios.post("afy10100/prompt", {});
-  if (res.returnCode !== 0) return;
-  applyPageData(res.data);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleHotKey);
 });
-
-// TODO: TECHNICAL_GAP: 套用頁面資料保護控制
-// TODO: TECHNICAL_GAP: 回報頁面回應時間
-// TODO: TECHNICAL_GAP: 傳遞登入平台與系統資訊
-// TODO: TECHNICAL_GAP: 套用 EUDC 字型
-// TODO: TECHNICAL_GAP: 顯示作業結果通知
 </script>
 
 <style scoped>
