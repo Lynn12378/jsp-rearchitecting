@@ -85,7 +85,9 @@ user-invocable: true
 
 ### R4: Shared Capability
 **Rationale**: 來源 JSP 對共用能力僅具消費關係，無從得知其內部實作
-**Required**: 非本地宣告之變數、方法、類別、Custom Tag(ex: `<my:xxx>`) → 查閱既有公開契約，選型目標專案中候選共用能力
+**Required**: 非本地宣告之變數、方法、類別、Custom Tag(ex: `<my:xxx>`) → 查閱既有公開契約，選型目標專案中候選共用能力:
+  - **共用元件**: UI 庫
+  - **共用函式**: 共用工具函式庫
 **Exception**: 語言與瀏覽器原生語法、公開已知第三方套件之標準用法，其行為已具業界共識，無須查閱既有公開契約
 **Conservative Matching**: 依輸入、輸出、功能與副作用逐一比對；等價性未獲充分確認者，不逕行實作
 **Forbidden**: 僅憑輸入輸出型別相符，逕行判定功能等價
