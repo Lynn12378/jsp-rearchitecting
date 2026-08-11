@@ -256,9 +256,11 @@
   </CxlModal>
 
   <CxlModal v-model="showDetail" title="通報資料明細" size="lg" content-scroll>
-    <!-- TODO: PENDING_CONVERSION: AFY10100ShowDetail -->
-    <!-- <AFY10100ShowDetail v-bind="detailParams" /> -->
-    <div class="cxl-text-gray-a7 text-center q-pa-lg">明細元件尚待轉換</div>
+    <AFY10100Detail
+      v-if="showDetail"
+      :request-params="detailParams"
+      embedded
+    />
   </CxlModal>
 </template>
 
@@ -275,6 +277,7 @@ import {
   CxlModal,
   CxlTable,
 } from "vue-cathaylife-component";
+import AFY10100Detail from "@/views/Y1/AFY10100Detail.vue";
 import afy10100Service from "@/service/AFY10100Service.js";
 import navCollection from "@/service/NavCollection.js";
 
@@ -834,6 +837,8 @@ const openDetail = (row) => {
  * @returns {void}
  */
 const handleHotKey = (event) => {
+  if (showDetail.value || showAsyncConfirm.value) return;
+
   const actions = {
     F2: query,
     F8: isAllow.value ? checkBeforeAsync : null,

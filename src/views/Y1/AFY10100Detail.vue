@@ -1,13 +1,14 @@
 <template>
   <CxlBreadcrumbs
+    v-if="!props.embedded"
     class="q-mb-md"
     :breadcrumbs="DETAIL_BREADCRUMBS"
     :routerPath="$route.path"
     :rootPath="ROOT_PATH"
   />
-  <div class="cxl-title-h1 q-mt-md q-mb-md">公會通報查詢</div>
+  <div v-if="!props.embedded" class="cxl-title-h1 q-mt-md q-mb-md">公會通報查詢</div>
 
-  <q-card class="cxl-card q-pa-md q-mb-lg">
+  <q-card class="cxl-card q-pa-md" :class="{ 'q-mb-lg': !props.embedded }">
     <q-markup-table class="cxl-table-form" separator="horizontal" flat bordered>
       <colgroup>
         <template v-for="columnIndex in 5" :key="columnIndex">
@@ -41,6 +42,16 @@ import navCollection from "@/service/NavCollection.js";
 
 const $cathayAxios = inject("$cathayAxios");
 const $route = useRoute();
+const props = defineProps({
+  requestParams: {
+    type: Object,
+    default: () => ({}),
+  },
+  embedded: {
+    type: Boolean,
+    default: false,
+  },
+});
 const ROOT_PATH = { label: "首頁", url: "/" };
 const DETAIL_BREADCRUMBS = navCollection.map((section) => ({
   ...section,
@@ -213,7 +224,9 @@ const detailRows = computed(() =>
  * @returns {Promise<void>}
  */
 const loadDetail = async () => {
-  const response = await $cathayAxios.post(afy10100Service.prompt, {});
+  const response = await $cathayAxios.post(afy10100Service.showDetail, {
+    ...props.requestParams,
+  });
   if (response.returnCode !== 0) {
     return;
   }

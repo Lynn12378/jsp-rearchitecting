@@ -5,4 +5,5 @@ export default {
   async: "afy10100/async",
   asyncCheckId: "afy10100/asynccheckid",
   prompt: "afy10100/prompt",
+  showDetail: "afy10100/showdetail",
 };
