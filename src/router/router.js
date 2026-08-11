@@ -38,6 +38,17 @@ const routes = [
       },
     ],
   },
+  {
+    path: "/A0",
+    component: BaseLayout,
+    children: [
+      {
+        path: "ATA08110",
+        name: "ATA08110",
+        component: () => import("@/views/A0/ATA08110.vue"),
+      },
+    ],
+  },
 ];
 
 export default { routes };
