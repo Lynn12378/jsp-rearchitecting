@@ -1,335 +1,715 @@
 <template>
-  <div class="ata08120">
-    <header class="ata08120__header subTitle">
-      <span aria-hidden="true">●</span>
-      <strong>公會通報設定</strong>
-      <span class="ata08120__screen-id">畫面編號：ATA08120</span>
-    </header>
+  <CxlBreadcrumbs
+    class="q-mb-md"
+    :breadcrumbs="navCollection"
+    :routerPath="$route.path"
+    :rootPath="ROOT_PATH"
+  />
+  <div class="cxl-title-h1 q-mt-md q-mb-md">公會通報設定(AF)</div>
 
-    <section class="ata08120__content">
-      <div class="ata08120__section-title tbBox2">公會通報設定</div>
+  <q-card class="cxl-card q-pa-md q-mb-lg">
+    <q-markup-table class="cxl-table-form" separator="horizontal" flat bordered>
+      <colgroup>
+        <col style="width: 10%" />
+        <col style="width: 23%" />
+        <col style="width: 10%" />
+        <col style="width: 23%" />
+        <col style="width: 10%" />
+        <col style="width: 23%" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th colspan="6" class="cxl-form-title">新增公會通報設定</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th><span class="cxl-text-danger">*</span> 契約來源</th>
+          <td>
+            <CxlInput
+              v-model="newSrc"
+              :disable="isBusy"
+              maxlength="6"
+              placeholder="請輸入契約來源"
+              :error="!!errors['newEntry.src']"
+              :error-message="errors['newEntry.src']"
+            />
+          </td>
+          <th><span class="cxl-text-danger">*</span> 連線等候時間（毫秒）</th>
+          <td>
+            <CxlInput
+              v-model="newTimeout"
+              :disable="isBusy"
+              placeholder="請輸入連線等候時間"
+              :error="!!errors['newEntry.timeout']"
+              :error-message="errors['newEntry.timeout']"
+            />
+          </td>
+          <th><span class="cxl-text-danger">*</span> 資料等候時間（毫秒）</th>
+          <td>
+            <CxlInput
+              v-model="newDataTimeout"
+              :disable="isBusy"
+              placeholder="請輸入資料等候時間"
+              :error="!!errors['newEntry.dataTimeout']"
+              :error-message="errors['newEntry.dataTimeout']"
+            />
+          </td>
+        </tr>
+        <tr>
+          <th>作業開關</th>
+          <td>
+            <CxlDropdown
+              v-model="newIsEffective"
+              :disable="isBusy"
+              :options="EFFECTIVE_OPTIONS"
+              emit-value
+              map-options
+            />
+          </td>
+          <th><span class="cxl-text-danger">*</span> 公會連線方式</th>
+          <td>
+            <CxlInput
+              v-model="newConnection"
+              :disable="isBusy"
+              maxlength="1"
+              placeholder="W 或 V"
+              :error="!!errors['newEntry.connection']"
+              :error-message="errors['newEntry.connection']"
+              @update:model-value="handleNewConnectionInput"
+            />
+          </td>
+          <th>WebService 呼叫方法</th>
+          <td>
+            <CxlDropdown
+              v-model="newAction"
+              :disable="isBusy"
+              :options="actionOptions"
+              emit-value
+              map-options
+            />
+          </td>
+        </tr>
+        <tr>
+          <th><span class="cxl-text-danger">*</span> 重試次數</th>
+          <td>
+            <CxlInput
+              v-model="newRetry"
+              :disable="isBusy"
+              placeholder="請輸入重試次數"
+              :error="!!errors['newEntry.retry']"
+              :error-message="errors['newEntry.retry']"
+            />
+          </td>
+          <th><span class="cxl-text-danger">*</span> FTP 登入帳號</th>
+          <td>
+            <CxlInput
+              v-model="newFtpHost"
+              :disable="isBusy"
+              maxlength="1"
+              placeholder="1 或 2"
+              :error="!!errors['newEntry.ftpHost']"
+              :error-message="errors['newEntry.ftpHost']"
+            />
+          </td>
+          <th>通報種類</th>
+          <td>
+            <CxlInput
+              v-model="newType"
+              :disable="isBusy"
+              maxlength="1"
+              placeholder="R 或 L"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td colspan="6">
+            <div class="row justify-center">
+              <CxlButton
+                label="新增"
+                :disable="isBusy"
+                :loading="pendingAction === 'insert'"
+                @click="insertDetail"
+              />
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </q-markup-table>
+  </q-card>
 
-      <q-markup-table class="ata08120__table tbBox2" dense bordered>
-        <thead>
-          <tr class="tbBlue">
-            <th>契約來源中文</th>
-            <th>契約來源</th>
-            <th>連線等候時間(毫秒)</th>
-            <th>資料等候時間(毫秒)</th>
-            <th>作業開關</th>
-            <th>公會連線方式</th>
-            <th>WebService呼叫方法</th>
-            <th>重試次數</th>
-            <th>FTP登入帳號</th>
-            <th>通報種類</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="tbYellow2">
-            <td></td>
-            <td>
-              <q-input
-                v-model="newSrc"
-                dense
-                outlined
-                maxlength="6"
-                :error="!!errors.newSrc"
-                :error-message="errors.newSrc"
+  <q-card class="cxl-card q-pa-md q-mb-lg">
+    <div class="text-h6 q-mb-md">公會通報設定清單</div>
+    <CxlTable
+      v-model:pagination="pagination"
+      :rows="details"
+      :columns="DETAIL_COLUMNS"
+      row-key="src"
+      separator="cell"
+      :rows-per-page-options="[0]"
+      hide-bottom
+    >
+      <template #body="props">
+        <q-tr :props="props">
+          <q-td key="srcName" :props="props">
+            {{ props.row.srcName }}
+          </q-td>
+          <q-td key="src" :props="props">
+            {{ props.row.src }}
+          </q-td>
+          <q-td key="timeout" :props="props">
+            <CxlInput
+              v-model="props.row.timeout"
+              :disable="isBusy"
+              :error="!!getDetailFieldError(props.rowIndex, 'timeout')"
+              :error-message="getDetailFieldError(props.rowIndex, 'timeout')"
+              @update:model-value="
+                clearDetailFieldError(props.rowIndex, 'timeout')
+              "
+            />
+          </q-td>
+          <q-td key="dataTimeout" :props="props">
+            <CxlInput
+              v-model="props.row.dataTimeout"
+              :disable="isBusy"
+              :error="!!getDetailFieldError(props.rowIndex, 'dataTimeout')"
+              :error-message="
+                getDetailFieldError(props.rowIndex, 'dataTimeout')
+              "
+              @update:model-value="
+                clearDetailFieldError(props.rowIndex, 'dataTimeout')
+              "
+            />
+          </q-td>
+          <q-td key="isEffective" :props="props">
+            <CxlDropdown
+              v-model="props.row.isEffective"
+              :disable="isBusy"
+              :options="EFFECTIVE_OPTIONS"
+              emit-value
+              map-options
+            />
+          </q-td>
+          <q-td key="connection" :props="props">
+            <CxlInput
+              v-model="props.row.connection"
+              :disable="isBusy"
+              maxlength="1"
+              :error="!!getDetailFieldError(props.rowIndex, 'connection')"
+              :error-message="
+                getDetailFieldError(props.rowIndex, 'connection')
+              "
+              @update:model-value="
+                handleDetailConnectionInput(props.rowIndex, $event)
+              "
+            />
+          </q-td>
+          <q-td key="action" :props="props">
+            <CxlDropdown
+              v-model="props.row.action"
+              :disable="isBusy"
+              :options="actionOptions"
+              emit-value
+              map-options
+            />
+          </q-td>
+          <q-td key="retry" :props="props">
+            <CxlInput
+              v-model="props.row.retry"
+              :disable="isBusy"
+              :error="!!getDetailFieldError(props.rowIndex, 'retry')"
+              :error-message="getDetailFieldError(props.rowIndex, 'retry')"
+              @update:model-value="
+                clearDetailFieldError(props.rowIndex, 'retry')
+              "
+            />
+          </q-td>
+          <q-td key="ftpHost" :props="props">
+            <CxlInput
+              v-model="props.row.ftpHost"
+              :disable="isBusy"
+              maxlength="1"
+              :error="!!getDetailFieldError(props.rowIndex, 'ftpHost')"
+              :error-message="getDetailFieldError(props.rowIndex, 'ftpHost')"
+              @update:model-value="
+                clearDetailFieldError(props.rowIndex, 'ftpHost')
+              "
+            />
+          </q-td>
+          <q-td key="type" :props="props">
+            <CxlInput
+              v-model="props.row.type"
+              :disable="isBusy"
+              maxlength="1"
+            />
+          </q-td>
+          <q-td key="operation" :props="props">
+            <div class="row justify-center q-gutter-sm no-wrap">
+              <CxlButton
+                label="修改"
+                :disable="isBusy"
+                :loading="pendingAction === `update-${props.rowIndex}`"
+                @click="requestUpdate(props.rowIndex)"
               />
-            </td>
-            <td>
-              <q-input
-                v-model="newTimeout"
-                dense
-                outlined
-                :error="!!errors.newTimeout"
-                :error-message="errors.newTimeout"
+              <CxlButton
+                label="刪除"
+                theme="danger"
+                :disable="isBusy"
+                :loading="pendingAction === `delete-${props.rowIndex}`"
+                @click="requestDelete(props.rowIndex)"
               />
-            </td>
-            <td>
-              <q-input
-                v-model="newDataTimeout"
-                dense
-                outlined
-                :error="!!errors.newDataTimeout"
-                :error-message="errors.newDataTimeout"
-              />
-            </td>
-            <td>
-              <q-select
-                v-model="newIsEffective"
-                dense
-                outlined
-                emit-value
-                map-options
-                :options="effectiveOptions"
-              />
-            </td>
-            <td>
-              <q-input
-                v-model="newConnection"
-                dense
-                outlined
-                maxlength="1"
-                :error="!!errors.newConnection"
-                :error-message="errors.newConnection"
-                @update:model-value="newConnection = toUpperCase(newConnection)"
-              />
-            </td>
-            <td>
-              <q-select
-                v-model="newAction"
-                dense
-                outlined
-                emit-value
-                map-options
-                :options="actionOptions"
-              />
-            </td>
-            <td>
-              <q-input
-                v-model="newRetry"
-                dense
-                outlined
-                :error="!!errors.newRetry"
-                :error-message="errors.newRetry"
-              />
-            </td>
-            <td>
-              <q-input
-                v-model="newFtpHost"
-                dense
-                outlined
-                maxlength="1"
-                :error="!!errors.newFtpHost"
-                :error-message="errors.newFtpHost"
-              />
-            </td>
-            <td>
-              <q-input v-model="newType" dense outlined maxlength="1" />
-            </td>
-            <td>
-              <q-btn class="button" dense label="新增" @click="onInsert" />
-            </td>
-          </tr>
-        </tbody>
-      </q-markup-table>
+            </div>
+          </q-td>
+        </q-tr>
+      </template>
+    </CxlTable>
+  </q-card>
 
-      <q-markup-table class="ata08120__table ata08120__detail-table tbBox2" dense bordered>
-        <thead>
-          <tr class="tbBlue">
-            <th>契約來源中文</th>
-            <th>契約來源</th>
-            <th>連線等候時間(毫秒)</th>
-            <th>資料等候時間(毫秒)</th>
-            <th>作業開關</th>
-            <th>公會連線方式</th>
-            <th>WebService呼叫方法</th>
-            <th>重試次數</th>
-            <th>FTP登入帳號</th>
-            <th>通報種類</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="detail in details"
-            :key="detail.src"
-            class="tbYellow2"
-          >
-            <td>{{ detail.srcName }}</td>
-            <td>{{ detail.src }}</td>
-            <td>
-              <q-input
-                v-model="detail.timeout"
-                dense
-                outlined
-                :error="!!errors[detailErrorPath(detail.src, 'timeout')]"
-                :error-message="errors[detailErrorPath(detail.src, 'timeout')]"
-              />
-            </td>
-            <td>
-              <q-input
-                v-model="detail.dataTimeout"
-                dense
-                outlined
-                :error="!!errors[detailErrorPath(detail.src, 'dataTimeout')]"
-                :error-message="errors[detailErrorPath(detail.src, 'dataTimeout')]"
-              />
-            </td>
-            <td>
-              <q-select
-                v-model="detail.isEffective"
-                dense
-                outlined
-                emit-value
-                map-options
-                :options="effectiveOptions"
-              />
-            </td>
-            <td>
-              <q-input
-                v-model="detail.connection"
-                dense
-                outlined
-                maxlength="1"
-                :error="!!errors[detailErrorPath(detail.src, 'connection')]"
-                :error-message="errors[detailErrorPath(detail.src, 'connection')]"
-                @update:model-value="detail.connection = toUpperCase(detail.connection)"
-              />
-            </td>
-            <td>
-              <q-select
-                v-model="detail.action"
-                dense
-                outlined
-                emit-value
-                map-options
-                :options="actionOptions"
-              />
-            </td>
-            <td>
-              <q-input
-                v-model="detail.retry"
-                dense
-                outlined
-                :error="!!errors[detailErrorPath(detail.src, 'retry')]"
-                :error-message="errors[detailErrorPath(detail.src, 'retry')]"
-              />
-            </td>
-            <td>
-              <q-input
-                v-model="detail.ftpHost"
-                dense
-                outlined
-                maxlength="1"
-                :error="!!errors[detailErrorPath(detail.src, 'ftpHost')]"
-                :error-message="errors[detailErrorPath(detail.src, 'ftpHost')]"
-              />
-            </td>
-            <td>
-              <q-input v-model="detail.type" dense outlined maxlength="1" />
-            </td>
-            <td>
-              <div class="ata08120__actions">
-                <q-btn class="button" dense label="刪除" @click="onDelete(detail.src)" />
-                <q-btn class="button" dense label="修改" @click="onUpdate(detail.src)" />
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </q-markup-table>
+  <q-card class="cxl-card q-pa-md q-mb-lg">
+    <div class="text-subtitle1 q-mb-sm">使用說明</div>
+    <ol class="q-my-none q-pl-lg">
+      <li>通報種類：R＝收件，L＝承保（取回作業不使用此欄位）。</li>
+      <li>公會連線方式：W＝WebService，V＝VPN。</li>
+      <li>FTP 登入帳號：1＝網路投保，2＝批次。</li>
+      <li>作業開關：Y＝開，N＝關；正式環境請小心使用。</li>
+    </ol>
+  </q-card>
 
-      <div class="ata08120__instructions">
-        <div>※使用說明:</div>
-        <div>1. 通報種類: R=收件，L=承保 (如果是取回作業，這個欄位不會使用)</div>
-        <div>2. 公會連線方式: W=Webservice，V=VPN</div>
-        <div>3. FTP登入帳號: 1=網路投保，2=批次</div>
-        <div>4. 作業開關(正式環境請小心使用): Y-&gt;開，N-&gt;關(代表直接pass該項公會作業)</div>
-      </div>
-    </section>
-  </div>
+  <CxlModal
+    v-model="isModalVisible"
+    :title="modalTitle"
+    :cancelText="modalCancelText"
+    :confirmText="modalConfirmText"
+    persistent
+    @confirm="handleModalConfirm"
+    @cancel="handleModalCancel"
+    @hide="handleModalHide"
+  >
+    <p
+      v-for="(message, index) in modalMessages"
+      :key="`${index}-${message}`"
+      class="q-mb-sm"
+    >
+      {{ message }}
+    </p>
+  </CxlModal>
 </template>
 
 <script setup>
-import { inject, onMounted, ref } from "vue";
-import { useForm, useField } from "vee-validate";
-import { array, lazy, mixed, object, string } from "yup";
-import { useQuasar } from "quasar";
+import { computed, inject, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
+import { useField, useForm } from "vee-validate";
+import { ValidationError, object, string } from "yup";
+import {
+  CxlBreadcrumbs,
+  CxlButton,
+  CxlDropdown,
+  CxlInput,
+  CxlModal,
+  CxlTable,
+} from "vue-cathaylife-component";
+import "@/assets/libs/CathayValidateRules.js";
+import ata08120Service from "@/service/ATA08120Service.js";
+import navCollection from "@/service/NavCollection.js";
 
 const $cathayAxios = inject("$cathayAxios");
-const $q = useQuasar();
-
-const EMPTY_VALUES = {
-  newSrc: "",
-  newTimeout: "",
-  newDataTimeout: "",
-  newIsEffective: "Y",
-  newConnection: "",
-  newAction: "",
-  newRetry: "",
-  newFtpHost: "",
-  newType: "",
-  details: [],
+const $route = useRoute();
+const ROOT_PATH = { label: "首頁", url: "/" };
+const EMPTY_NEW_ENTRY = {
+  src: "",
+  timeout: "",
+  dataTimeout: "",
+  isEffective: "Y",
+  connection: "",
+  action: "",
+  retry: "",
+  ftpHost: "",
+  type: "",
 };
-
-const requiredText = {
-  name: "requiredText",
-  message: "此欄位必須輸入",
-  test: (value) => Boolean(value?.trim()),
-};
-const numericText = (message) => ({
-  name: "numericText",
-  message,
-  test: (value) => value === undefined || value === null || value === "" || !Number.isNaN(Number(value)),
-});
-
-const requiredNumericField = (requiredMessage, numericMessage) =>
-  string()
-    .test({ ...requiredText, message: requiredMessage })
-    .test(numericText(numericMessage));
-const requiredOnlyField = (requiredMessage) =>
-  string().test({ ...requiredText, message: requiredMessage });
-
-const insertSchema = object({
-  newSrc: requiredOnlyField("契約來源必須輸入"),
-  newTimeout: requiredNumericField("連線等候時間必須輸入", "連線等候時間必須輸入數字"),
-  newDataTimeout: requiredNumericField("資料等候時間必須輸入", "資料等候時間必須輸入數字"),
-  newConnection: requiredOnlyField("公會連線方式必須輸入"),
-  newRetry: requiredNumericField("重試次數必須輸入", "重試次數必須輸入數字"),
-  newFtpHost: requiredOnlyField("FTP登入帳號必須輸入"),
-});
-
-const updateDetailSchema = object({
-  timeout: requiredNumericField("連線等待時間必須輸入", "連線等待時間必須輸入數字"),
-  dataTimeout: requiredNumericField("資料等待時間必須輸入", "資料等待時間必須輸入數字"),
-  connection: requiredOnlyField("公會通報方式必須輸入"),
-  retry: requiredNumericField("重試次數必須輸入", "重試次數必須輸入數字"),
-  ftpHost: requiredOnlyField("FTP登入帳號必須輸入"),
-});
-
-const updateSchema = (detailIndex) =>
-  object({
-    details: array().of(
-      lazy((_value, options) =>
-        options.path === `details[${detailIndex}]` ? updateDetailSchema : mixed(),
-      ),
-    ),
-  });
-
-const { errors, setValues, validate } = useForm({
-  validationSchema: insertSchema,
-  initialValues: EMPTY_VALUES,
-  validateOnMount: false,
-});
-const { value: newSrc } = useField("newSrc");
-const { value: newTimeout } = useField("newTimeout");
-const { value: newDataTimeout } = useField("newDataTimeout");
-const { value: newIsEffective } = useField("newIsEffective");
-const { value: newConnection } = useField("newConnection");
-const { value: newAction } = useField("newAction");
-const { value: newRetry } = useField("newRetry");
-const { value: newFtpHost } = useField("newFtpHost");
-const { value: newType } = useField("newType");
-const { value: details } = useField("details");
-
-const actionOptions = ref([]);
-const effectiveOptions = [
-  { label: "Y", value: "Y" },
-  { label: "N", value: "N" },
+const EFFECTIVE_OPTIONS = [
+  { label: "開啟", value: "Y" },
+  { label: "關閉", value: "N" },
+];
+const DETAIL_COLUMNS = [
+  {
+    name: "srcName",
+    label: "契約來源中文",
+    field: "srcName",
+    align: "left",
+  },
+  {
+    name: "src",
+    label: "契約來源",
+    field: "src",
+    align: "center",
+  },
+  {
+    name: "timeout",
+    label: "連線等候時間（毫秒）",
+    field: "timeout",
+    align: "center",
+  },
+  {
+    name: "dataTimeout",
+    label: "資料等候時間（毫秒）",
+    field: "dataTimeout",
+    align: "center",
+  },
+  {
+    name: "isEffective",
+    label: "作業開關",
+    field: "isEffective",
+    align: "center",
+  },
+  {
+    name: "connection",
+    label: "公會連線方式",
+    field: "connection",
+    align: "center",
+  },
+  {
+    name: "action",
+    label: "WebService 呼叫方法",
+    field: "action",
+    align: "center",
+  },
+  {
+    name: "retry",
+    label: "重試次數",
+    field: "retry",
+    align: "center",
+  },
+  {
+    name: "ftpHost",
+    label: "FTP 登入帳號",
+    field: "ftpHost",
+    align: "center",
+  },
+  {
+    name: "type",
+    label: "通報種類",
+    field: "type",
+    align: "center",
+  },
+  {
+    name: "operation",
+    label: "操作",
+    field: "operation",
+    align: "center",
+  },
 ];
 
-const toUpperCase = (value) => value?.toUpperCase() ?? "";
+/**
+ * 建立數字字串的補充驗證規則。
+ *
+ * @param {string} message - 驗證失敗訊息
+ * @returns {object} Yup 自訂驗證設定
+ */
+const validNumericText = (message) => ({
+  name: "validNumericText",
+  message,
+  test: (value) => !value?.trim() || !Number.isNaN(Number(value)),
+});
 
-const findDetailIndex = (src) => details.value.findIndex((detail) => detail.src === src);
+const detailValidationSchema = object({
+  timeout: string()
+    .trim()
+    .required("連線等候時間必須輸入")
+    .validateNumber("連線等候時間限定只能輸入數字")
+    .test(validNumericText("連線等候時間限定只能輸入數字")),
+  dataTimeout: string()
+    .trim()
+    .required("資料等候時間必須輸入")
+    .validateNumber("資料等候時間限定只能輸入數字")
+    .test(validNumericText("資料等候時間限定只能輸入數字")),
+  connection: string()
+    .trim()
+    .required("公會連線方式必須輸入")
+    .max(1, "公會連線方式限輸入 1 碼"),
+  retry: string()
+    .trim()
+    .required("重試次數必須輸入")
+    .validateNumber("重試次數限定只能輸入數字")
+    .test(validNumericText("重試次數限定只能輸入數字")),
+  ftpHost: string()
+    .trim()
+    .required("FTP 登入帳號必須輸入")
+    .max(1, "FTP 登入帳號限輸入 1 碼"),
+});
+const validationSchema = object({
+  newEntry: object({
+    src: string()
+      .trim()
+      .required("契約來源必須輸入")
+      .max(6, "契約來源限輸入 6 碼"),
+    timeout: string()
+      .trim()
+      .required("連線等候時間必須輸入")
+      .validateNumber("連線等候時間限定只能輸入數字")
+      .test(validNumericText("連線等候時間限定只能輸入數字")),
+    dataTimeout: string()
+      .trim()
+      .required("資料等候時間必須輸入")
+      .validateNumber("資料等候時間限定只能輸入數字")
+      .test(validNumericText("資料等候時間限定只能輸入數字")),
+    isEffective: string(),
+    connection: string()
+      .trim()
+      .required("公會連線方式必須輸入")
+      .max(1, "公會連線方式限輸入 1 碼"),
+    action: string(),
+    retry: string()
+      .trim()
+      .required("重試次數必須輸入")
+      .validateNumber("重試次數限定只能輸入數字")
+      .test(validNumericText("重試次數限定只能輸入數字")),
+    ftpHost: string()
+      .trim()
+      .required("FTP 登入帳號必須輸入")
+      .max(1, "FTP 登入帳號限輸入 1 碼"),
+    type: string().max(1, "通報種類限輸入 1 碼"),
+  }),
+});
 
-const detailErrorPath = (src, field) => {
-  const detailIndex = findDetailIndex(src);
-  return `details[${detailIndex}].${field}`;
+const pendingAction = ref("");
+const isOperationLocked = ref(false);
+const isPageLoading = ref(false);
+const selectedIndex = ref("");
+const detailFieldErrors = ref({});
+const actionOptions = ref([]);
+const pagination = ref({ rowsPerPage: 0 });
+const isModalVisible = ref(false);
+const modalTitle = ref("提示");
+const modalMessages = ref([]);
+const modalCancelText = ref("");
+const modalConfirmText = ref("關閉");
+const isBusy = computed(
+  () => isOperationLocked.value || isPageLoading.value,
+);
+let modalResult = false;
+let resolveModal;
+
+const { errors, setErrors, setValues, validate } = useForm({
+  validationSchema,
+  initialValues: {
+    newEntry: { ...EMPTY_NEW_ENTRY },
+    details: [],
+  },
+  validateOnMount: false,
+});
+const { value: newSrc } = useField("newEntry.src");
+const { value: newTimeout } = useField("newEntry.timeout");
+const { value: newDataTimeout } = useField("newEntry.dataTimeout");
+const { value: newIsEffective } = useField("newEntry.isEffective");
+const { value: newConnection } = useField("newEntry.connection");
+const { value: newAction } = useField("newEntry.action");
+const { value: newRetry } = useField("newEntry.retry");
+const { value: newFtpHost } = useField("newEntry.ftpHost");
+const { value: newType } = useField("newEntry.type");
+const { value: details } = useField("details");
+
+/**
+ * 將輸入值轉為大寫字串。
+ *
+ * @param {unknown} value - 待轉換值
+ * @returns {string} 大寫字串
+ */
+const toUpperCase = (value) => String(value ?? "").toUpperCase();
+
+/**
+ * 將新增區的公會連線方式轉為大寫。
+ *
+ * @param {unknown} value - 欄位輸入值
+ * @returns {void}
+ */
+const handleNewConnectionInput = (value) => {
+  newConnection.value = toUpperCase(value);
 };
 
-const buildRequest = (index = "") => ({
+/**
+ * 將清單內的公會連線方式轉為大寫並清除欄位錯誤。
+ *
+ * @param {number} index - 清單索引
+ * @param {unknown} value - 欄位輸入值
+ * @returns {void}
+ */
+const handleDetailConnectionInput = (index, value) => {
+  if (!details.value[index]) return;
+  details.value[index].connection = toUpperCase(value);
+  clearDetailFieldError(index, "connection");
+};
+
+/**
+ * 將訊息正規化為彈窗可顯示的字串陣列。
+ *
+ * @param {unknown} messages - 待顯示訊息
+ * @returns {string[]} 正規化後的訊息
+ */
+const normalizeMessages = (messages) => {
+  if (Array.isArray(messages)) {
+    return messages.filter(Boolean).map(String);
+  }
+  return messages ? [String(messages)] : [];
+};
+
+/**
+ * 開啟訊息或確認彈窗。
+ *
+ * @param {object} options - 彈窗設定
+ * @param {string} options.title - 彈窗標題
+ * @param {unknown} options.messages - 彈窗訊息
+ * @param {string} options.confirmText - 確認按鈕文字
+ * @param {string} options.cancelText - 取消按鈕文字
+ * @returns {Promise<boolean>} 使用者是否確認
+ */
+const openModal = ({
+  title,
+  messages,
+  confirmText,
+  cancelText,
+}) => new Promise((resolve) => {
+  modalTitle.value = title;
+  modalMessages.value = normalizeMessages(messages);
+  modalConfirmText.value = confirmText;
+  modalCancelText.value = cancelText;
+  modalResult = false;
+  resolveModal = resolve;
+  isModalVisible.value = true;
+});
+
+/**
+ * 顯示提示訊息。
+ *
+ * @param {unknown} messages - 待顯示訊息
+ * @returns {Promise<void>} 彈窗關閉後完成
+ */
+const showAlert = async (messages) => {
+  const normalizedMessages = normalizeMessages(messages);
+  if (normalizedMessages.length === 0) return;
+  await openModal({
+    title: "提示",
+    messages: normalizedMessages,
+    confirmText: "關閉",
+    cancelText: "",
+  });
+};
+
+/**
+ * 顯示操作確認訊息。
+ *
+ * @param {string} message - 確認訊息
+ * @returns {Promise<boolean>} 使用者是否確認
+ */
+const showConfirm = (message) => openModal({
+  title: "確認",
+  messages: message,
+  confirmText: "確認",
+  cancelText: "取消",
+});
+
+/**
+ * 處理彈窗確認按鈕。
+ *
+ * @returns {void}
+ */
+const handleModalConfirm = () => {
+  modalResult = true;
+  isModalVisible.value = false;
+};
+
+/**
+ * 處理彈窗取消按鈕。
+ *
+ * @returns {void}
+ */
+const handleModalCancel = () => {
+  modalResult = false;
+  isModalVisible.value = false;
+};
+
+/**
+ * 在彈窗關閉時結束等待中的操作。
+ *
+ * @returns {void}
+ */
+const handleModalHide = () => {
+  if (!resolveModal) return;
+  const resolve = resolveModal;
+  resolveModal = undefined;
+  resolve(modalResult);
+};
+
+/**
+ * 顯示表單驗證錯誤。
+ *
+ * @param {string[]} messages - 驗證錯誤訊息
+ * @returns {Promise<void>} 彈窗關閉後完成
+ */
+const showValidationErrors = async (messages) => {
+  const uniqueMessages = [...new Set(messages.filter(Boolean))];
+  await showAlert([...uniqueMessages, "請確認紅框欄位後再執行操作。"]);
+};
+
+/**
+ * 取得指定清單欄位的錯誤訊息。
+ *
+ * @param {number} index - 清單索引
+ * @param {string} field - 欄位名稱
+ * @returns {string} 錯誤訊息
+ */
+const getDetailFieldError = (index, field) => (
+  selectedIndex.value === index ? detailFieldErrors.value[field] ?? "" : ""
+);
+
+/**
+ * 清除指定清單欄位的錯誤訊息。
+ *
+ * @param {number} index - 清單索引
+ * @param {string} field - 欄位名稱
+ * @returns {void}
+ */
+const clearDetailFieldError = (index, field) => {
+  if (selectedIndex.value !== index || !detailFieldErrors.value[field]) return;
+  const nextErrors = { ...detailFieldErrors.value };
+  delete nextErrors[field];
+  detailFieldErrors.value = nextErrors;
+};
+
+/**
+ * 驗證指定清單資料。
+ *
+ * @param {number} index - 清單索引
+ * @returns {Promise<boolean>} 是否通過驗證
+ */
+const validateDetail = async (index) => {
+  const detail = details.value[index];
+  if (!detail) {
+    await showAlert("找不到指定的公會通報設定。");
+    return false;
+  }
+
+  try {
+    await detailValidationSchema.validate(detail, { abortEarly: false });
+    detailFieldErrors.value = {};
+    return true;
+  } catch (error) {
+    if (!(error instanceof ValidationError)) throw error;
+    const nextErrors = {};
+    error.inner.forEach(({ path, message }) => {
+      if (path && !nextErrors[path]) nextErrors[path] = message;
+    });
+    detailFieldErrors.value = nextErrors;
+    await showValidationErrors(Object.values(nextErrors));
+    return false;
+  }
+};
+
+/**
+ * 建立後端作業所需的原始 DTO。
+ *
+ * @returns {object} 公會通報設定作業參數
+ */
+const buildFormPayload = () => ({
   SRC_NEW: newSrc.value,
   TIMEOUT_NEW: newTimeout.value,
   DATA_TIMEOUT_NEW: newDataTimeout.value,
@@ -348,154 +728,140 @@ const buildRequest = (index = "") => ({
   RETRY: details.value.map((detail) => detail.retry),
   FTP_HOST: details.value.map((detail) => detail.ftpHost),
   TYPE: details.value.map((detail) => detail.type),
-  index,
+  index: selectedIndex.value,
 });
 
+/**
+ * 載入公會通報設定清單與 WebService 方法選項。
+ *
+ * @returns {Promise<void>} 載入完成
+ */
 const fetchPageData = async () => {
-  const res = await $cathayAxios.post("ata08120/prompt", {});
-  if (res.returnCode !== 0) {
-    setValues(EMPTY_VALUES);
-    actionOptions.value = [];
+  isPageLoading.value = true;
+  try {
+    const response = await $cathayAxios.post(ata08120Service.prompt, {});
+    if (response.returnCode !== 0) return;
+    if (
+      !Array.isArray(response.data?.details)
+      || !Array.isArray(response.data?.actionOptions)
+    ) {
+      await showAlert("伺服器回傳的公會通報設定格式錯誤。");
+      return;
+    }
+
+    setValues({
+      newEntry: { ...EMPTY_NEW_ENTRY },
+      details: response.data.details,
+    });
+    setErrors({});
+    actionOptions.value = response.data.actionOptions;
+    selectedIndex.value = "";
+    detailFieldErrors.value = {};
+    await showAlert(response.data.messages);
+  } finally {
+    isPageLoading.value = false;
+  }
+};
+
+/**
+ * 執行新增、修改或刪除作業。
+ *
+ * @param {string} actionKey - 畫面操作識別值
+ * @param {string} endpoint - API endpoint
+ * @param {string} successMessage - 成功訊息
+ * @returns {Promise<void>} 作業完成
+ */
+const executeAction = async (actionKey, endpoint, successMessage) => {
+  pendingAction.value = actionKey;
+  try {
+    const response = await $cathayAxios.post(endpoint, buildFormPayload());
+    if (response.returnCode !== 0) return;
+    await showAlert(successMessage);
+    await fetchPageData();
+  } finally {
+    pendingAction.value = "";
+  }
+};
+
+/**
+ * 驗證並新增公會通報設定。
+ *
+ * @returns {Promise<void>} 新增流程完成
+ */
+const insertDetail = async () => {
+  if (isOperationLocked.value) return;
+  isOperationLocked.value = true;
+  try {
+    selectedIndex.value = "";
+    detailFieldErrors.value = {};
+    const { valid } = await validate();
+    if (!valid) {
+      await showValidationErrors(Object.values(errors.value));
+      return;
+    }
+    await executeAction(
+      "insert",
+      ata08120Service.insert,
+      "公會通報設定新增成功",
+    );
+  } finally {
+    isOperationLocked.value = false;
+  }
+};
+
+/**
+ * 確認並刪除指定公會通報設定。
+ *
+ * @param {number} index - 清單索引
+ * @returns {Promise<void>} 刪除流程完成
+ */
+const requestDelete = async (index) => {
+  if (isOperationLocked.value) return;
+  if (!details.value[index]) {
+    await showAlert("找不到指定的公會通報設定。");
     return;
   }
 
-  setValues({
-    ...EMPTY_VALUES,
-    details: res.data.details,
-  });
-  actionOptions.value = res.data.actionOptions;
-};
-
-const notifySuccess = (message) => {
-  $q.notify({ type: "positive", message });
-};
-
-const confirmAction = (message) =>
-  new Promise((resolve) => {
-    $q.dialog({
-      message,
-      cancel: true,
-      persistent: true,
-    })
-      .onOk(() => resolve(true))
-      .onCancel(() => resolve(false));
-  });
-
-const onInsert = async () => {
-  const { valid } = await validate({ schema: insertSchema });
-  if (!valid) return;
-
-  newConnection.value = toUpperCase(newConnection.value);
-  const res = await $cathayAxios.post("ata08120/insert", buildRequest());
-  if (res.returnCode === 0) {
-    notifySuccess("公會通報設定新增成功");
+  isOperationLocked.value = true;
+  try {
+    selectedIndex.value = index;
+    detailFieldErrors.value = {};
+    const confirmed = await showConfirm("請確認是否要刪除？");
+    if (!confirmed) return;
+    await executeAction(
+      `delete-${index}`,
+      ata08120Service.delete,
+      "公會通報設定刪除成功",
+    );
+  } finally {
+    isOperationLocked.value = false;
   }
-  await fetchPageData();
 };
 
-const onDelete = async (src) => {
-  const detailIndex = findDetailIndex(src);
-  const agreed = await confirmAction("請確認是否要刪除?");
-  if (!agreed) return;
-
-  const res = await $cathayAxios.post("ata08120/delete", buildRequest(detailIndex));
-  if (res.returnCode === 0) {
-    notifySuccess("公會通報設定刪除成功");
+/**
+ * 驗證、確認並修改指定公會通報設定。
+ *
+ * @param {number} index - 清單索引
+ * @returns {Promise<void>} 修改流程完成
+ */
+const requestUpdate = async (index) => {
+  if (isOperationLocked.value) return;
+  isOperationLocked.value = true;
+  try {
+    selectedIndex.value = index;
+    const valid = await validateDetail(index);
+    if (!valid) return;
+    const confirmed = await showConfirm("請確認是否要修改？");
+    if (!confirmed) return;
+    await executeAction(
+      `update-${index}`,
+      ata08120Service.update,
+      "公會通報設定修改成功",
+    );
+  } finally {
+    isOperationLocked.value = false;
   }
-  await fetchPageData();
 };
 
-const onUpdate = async (src) => {
-  const detailIndex = findDetailIndex(src);
-  const { valid } = await validate({ schema: updateSchema(detailIndex) });
-  if (!valid) return;
-
-  const agreed = await confirmAction("請確認是否要修改?");
-  if (!agreed) return;
-
-  details.value[detailIndex].connection = toUpperCase(details.value[detailIndex].connection);
-  const res = await $cathayAxios.post("ata08120/update", buildRequest(detailIndex));
-  if (res.returnCode === 0) {
-    notifySuccess("公會通報設定修改成功");
-  }
-  await fetchPageData();
-};
-
-onMounted(async () => {
-  // TODO: OVER_APPROXIMATION: 待複查 DTAFY001_List 與 ACTION_Map 是否皆為伺服器端注入資料
-  await fetchPageData();
-});
+onMounted(fetchPageData);
 </script>
-
-<style scoped>
-.ata08120 {
-  position: relative;
-  min-height: 100%;
-  background-color: #f0fbc6;
-}
-
-.ata08120__header {
-  position: absolute;
-  z-index: 9;
-  top: 0;
-  left: 0;
-  display: grid;
-  grid-template-columns: 20px 1fr auto;
-  align-items: center;
-  width: 100%;
-  min-height: 30px;
-  padding: 2px 8px;
-  box-sizing: border-box;
-}
-
-.ata08120__screen-id {
-  text-align: right;
-}
-
-.ata08120__content {
-  padding: 30px 1.5% 12px;
-}
-
-.ata08120__section-title {
-  padding: 5px;
-}
-
-.ata08120__table {
-  width: 100%;
-  table-layout: fixed;
-}
-
-.ata08120__table th,
-.ata08120__table td {
-  width: 10%;
-  padding: 4px;
-  text-align: center;
-  vertical-align: middle;
-  white-space: normal;
-}
-
-.ata08120__table th:first-child,
-.ata08120__table td:first-child {
-  width: 12%;
-}
-
-.ata08120__table th:nth-child(2),
-.ata08120__table td:nth-child(2) {
-  width: 8%;
-}
-
-.ata08120__detail-table {
-  margin-top: 24px;
-}
-
-.ata08120__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px;
-}
-
-.ata08120__instructions {
-  margin-top: 8px;
-}
-</style>
