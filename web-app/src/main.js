@@ -17,6 +17,7 @@ import notification from "@/assets/plugins/CathayNotification/index.js";
 import loader from "@/assets/plugins/CathayLoader/index.js";
 import cathayDialog from "@/assets/plugins/CathayDialog.js";
 
+import "@/assets/sass/main.scss";
 import "@/assets/scss/hanlink.scss";
 
 // 難字系統
