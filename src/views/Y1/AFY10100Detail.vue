@@ -1,46 +1,58 @@
 <template>
-  <main class="afy10100-detail">
-    <header class="subTitle afy10100-detail__header">
-      <span aria-hidden="true">●</span>
-      <h1>公會通報查詢</h1>
-      <span>畫面編號：AFY10100</span>
-    </header>
+  <CxlBreadcrumbs
+    class="q-mb-md"
+    :breadcrumbs="DETAIL_BREADCRUMBS"
+    :routerPath="$route.path"
+    :rootPath="ROOT_PATH"
+  />
+  <div class="cxl-title-h1 q-mt-md q-mb-md">公會通報查詢</div>
 
-    <section class="afy10100-detail__panel">
-      <div class="tbBox2 afy10100-detail__panel-title">
-        <span aria-hidden="true">●</span>
-        公會通報查詢
-      </div>
-
-      <q-markup-table class="afy10100-detail__table" dense bordered>
-        <template>
-          <tbody>
-            <tr>
-              <td class="afy10100-detail__section-title" colspan="10">
-                資料編輯區
-              </td>
-            </tr>
-            <tr v-for="row in detailRows" :key="row.id">
-              <template v-for="field in row.fields" :key="field.key">
-                <td class="tbYellow afy10100-detail__label">
-                  {{ field.label }}
-                </td>
-                <td class="tbYellow2 afy10100-detail__value">
-                  {{ field.value }}
-                </td>
-              </template>
-            </tr>
-          </tbody>
+  <q-card class="cxl-card q-pa-md q-mb-lg">
+    <q-markup-table class="cxl-table-form" separator="horizontal" flat bordered>
+      <colgroup>
+        <template v-for="columnIndex in 5" :key="columnIndex">
+          <col style="width: 10%" />
+          <col style="width: 10%" />
         </template>
-      </q-markup-table>
-    </section>
-  </main>
+      </colgroup>
+      <thead>
+        <tr>
+          <th colspan="10" class="cxl-form-title">通報資料明細</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="row in detailRows" :key="row.id">
+          <template v-for="field in row.fields" :key="field.key">
+            <th>{{ field.label }}</th>
+            <td>{{ field.value }}</td>
+          </template>
+        </tr>
+      </tbody>
+    </q-markup-table>
+  </q-card>
 </template>
 
 <script setup>
-import { computed, inject, onMounted, ref } from 'vue'
+import { computed, inject, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
+import { CxlBreadcrumbs } from "vue-cathaylife-component";
+import afy10100Service from "@/service/AFY10100Service.js";
+import navCollection from "@/service/NavCollection.js";
 
-const $cathayAxios = inject('$cathayAxios')
+const $cathayAxios = inject("$cathayAxios");
+const $route = useRoute();
+const ROOT_PATH = { label: "首頁", url: "/" };
+const DETAIL_BREADCRUMBS = navCollection.map((section) => ({
+  ...section,
+  items: section.items.map((item) =>
+    item.url === "/Y1/AFY10100"
+      ? {
+          ...item,
+          items: [{ label: "通報資料明細", url: "/Y1/AFY10100/detail" }],
+        }
+      : item,
+  ),
+}));
 
 const pageData = ref({
   dataMap: {},
@@ -48,7 +60,7 @@ const pageData = ref({
   payTypeDesc: {},
   oiuIndDesc: {},
   saleChnlDesc: {},
-})
+});
 
 const DETAIL_ROW_DEFINITIONS = [
   {
@@ -161,20 +173,29 @@ const DETAIL_ROW_DEFINITIONS = [
       { key: 'EMPTY_4', label: '', empty: true },
     ],
   },
-]
+];
 
+/**
+ * 取得明細欄位的顯示值，並套用代碼說明對照。
+ *
+ * @param {object} field - 明細欄位定義
+ * @param {string} field.key - API 資料欄位名稱
+ * @param {string} [field.lookup] - 代碼說明對照表名稱
+ * @param {boolean} [field.empty] - 是否為版面留白欄位
+ * @returns {*} 欄位顯示值
+ */
 const resolveFieldValue = (field) => {
   if (field.empty) {
-    return undefined
+    return undefined;
   }
 
-  const value = pageData.value.dataMap?.[field.key]
+  const value = pageData.value.dataMap?.[field.key];
   if (!field.lookup) {
-    return value
+    return value;
   }
 
-  return pageData.value[field.lookup]?.[value]
-}
+  return pageData.value[field.lookup]?.[value];
+};
 
 const detailRows = computed(() =>
   DETAIL_ROW_DEFINITIONS.map((row) => ({
@@ -184,69 +205,21 @@ const detailRows = computed(() =>
       value: resolveFieldValue(field),
     })),
   })),
-)
+);
 
-onMounted(async () => {
-  const res = await $cathayAxios.post('afy10100/prompt', {})
-  if (res.returnCode !== 0) {
-    return
+/**
+ * 載入公會通報明細資料。
+ *
+ * @returns {Promise<void>}
+ */
+const loadDetail = async () => {
+  const response = await $cathayAxios.post(afy10100Service.prompt, {});
+  if (response.returnCode !== 0) {
+    return;
   }
 
-  pageData.value = res.data
-})
+  pageData.value = response.data;
+};
+
+onMounted(loadDetail);
 </script>
-
-<style scoped>
-.afy10100-detail {
-  min-height: 100%;
-  padding-bottom: 16px;
-  background-color: #f0fbc6;
-}
-
-.afy10100-detail__header {
-  position: sticky;
-  z-index: 9;
-  top: 0;
-  display: grid;
-  grid-template-columns: 20px 1fr auto;
-  align-items: center;
-  min-height: 30px;
-  padding: 2px;
-  background-color: #f0fbc6;
-}
-
-.afy10100-detail__header h1 {
-  margin: 0;
-  font: inherit;
-}
-
-.afy10100-detail__panel {
-  width: 97%;
-  margin: 0 auto;
-  border: 1px solid #003366;
-  background-color: #ffffff;
-}
-
-.afy10100-detail__panel-title {
-  padding: 5px;
-}
-
-.afy10100-detail__table {
-  width: 100%;
-}
-
-.afy10100-detail__section-title {
-  padding: 1px;
-  text-align: left;
-}
-
-.afy10100-detail__label,
-.afy10100-detail__value {
-  width: 10%;
-  padding: 1px;
-  text-align: center;
-  vertical-align: middle;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-</style>
