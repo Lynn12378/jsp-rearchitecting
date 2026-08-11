@@ -31,6 +31,11 @@ const routes = [
         name: "AFY10300",
         component: () => import("@/views/Y1/AFY10300.vue"),
       },
+      {
+        path: "AFY10400",
+        name: "AFY10400",
+        component: () => import("@/views/Y1/AFY10400.vue"),
+      },
     ],
   },
 ];
