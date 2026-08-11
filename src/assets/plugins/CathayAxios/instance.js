@@ -61,8 +61,8 @@ const createCathayDefault = (config) => {
 
   return axios.create({
     baseURL: import.meta.env.VITE_API_HOST,
-    withCredentials: true,
-    headers: customHeaders,
+    // withCredentials: true,
+    // headers: customHeaders,
   });
 };
 
@@ -75,57 +75,14 @@ const showRtnMessage = true;
 cathayAxios.interceptors.response.use(
   (response) => {
     tryHideFullScreenLoading();
-    const resp = {};
-    if (import.meta.env.VITE_API_MODE === "json-server") {
-      if (response.status >= 200 && response.status <= 299) {
-        resp.data = {};
-        resp.data.returnCode = 0;
-        resp.data.msg = "";
-        resp.data.data = response.data;
-        return resp.data;
-      }
+    if (response.data.code === 200) {
+      $notifySuccessMethod(response.data.msg || "伺服器維護中，請稍候再試!");
+      response.data.returnCode = 0;
+    } else {
       $notifyErrorMethod(response.data.msg || "伺服器維護中，請稍候再試!");
-      return response.data;
-    }
-    if (response?.data?.ErrMsg?.returnCode == 0) {
-      // 處理JSONData 判斷API否是否正確
-      if (!response.data.jsonData) {
-        response.data.jsonData = {
-          error: true,
-          msg: "伺服器維護中，請稍候再試!",
-        };
-
-        $notifyErrorMethod("伺服器維護中，請稍候再試!");
-        return response.data;
-      }
-
-      response.data.jsonData = JSON.parse(response.data.jsonData);
-
-      if (response.data.jsonData?.error) {
-        $notifyErrorMethod(
-          `${response.data.jsonData?.error.code}: ${response.data.jsonData?.error.msg}`,
-        );
-      }
-
-      if (
-        response.data.ErrMsg.msgDesc &&
-        response.data.ErrMsg.msgmsgDesc.length > 0 &&
-        showRtnMessage
-      ) {
-        $notifySuccessMethod(response.data.ErrMsg.msgDesc);
-      }
-      return response.data;
+      response.data.returnCode = 999;
     }
 
-    if (response?.data?.ErrMsg?.returnCode == 403) {
-      location.reload();
-    }
-
-    if (showRtnMessage) {
-      $notifyErrorMethod(
-        response.data.ErrMsg.msgDesc || "伺服器維護中，請稍候再試!",
-      );
-    }
     return response.data;
   },
   (error) => {
@@ -255,17 +212,17 @@ export default {
         tryHideFullScreenLoading();
         if (response.data && response.data.ErrMsg.returnCode == 0) {
           if (
-            response.data.ErrMsg.msgDesc &&
-            response.data.ErrMsg.msgDesc.length > 0 &&
+            response.data.msg &&
+            response.data.msg.length > 0 &&
             showRtnMessage
           ) {
-            $notifySuccessMethod(response.data.ErrMsg.msgDesc);
+            $notifySuccessMethod(response.data.msg);
           }
           return Promise.resolve(response.data);
         }
 
         if (showRtnMessage) {
-          $notifyErrorMethod(response.data.ErrMsg.msgDesc);
+          $notifyErrorMethod(response.data.msg);
         }
         return Promise.resolve(response.data);
       })
