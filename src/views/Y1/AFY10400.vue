@@ -354,8 +354,8 @@ const exportFile = async () => {
     const response = await $cathayAxios.post(afy10400Service.export, {
       insrType: insrType.value,
       prodType: prodType.value,
-      table1_I_ID: entries.value.map((entry) => entry.insuredId),
-      table1_POLICY_NOs: entries.value.map((entry) => entry.policyNumbers),
+      I_ID: entries.value.map((entry) => entry.insuredId),
+      POLICY_NO: entries.value.map((entry) => entry.policyNumbers),
     });
     if (response.returnCode !== 0) return;
     applyExportResults(response.data.rtnMap);
