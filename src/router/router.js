@@ -12,6 +12,17 @@ const routes = [
       }
     ]
   },
+  {
+    path: "/Y1",
+    component: BaseLayout,
+    children: [
+      {
+        path: "AFY10100",
+        name: "AFY10100",
+        component: () => import("@/views/Y1/AFY10100.vue"),
+      },
+    ],
+  },
 ];
 
 export default { routes };
