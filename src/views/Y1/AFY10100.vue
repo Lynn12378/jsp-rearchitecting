@@ -1,293 +1,286 @@
 <template>
-  <div class="afy10100">
-    <header class="afy10100__header subTitle">
-      <span class="afy10100__header-dot">●</span>
-      <span>公會通報查詢</span>
-      <span class="afy10100__screen-id">畫面編號：AFY10100</span>
-    </header>
+  <CxlBreadcrumbs
+    class="q-mb-md"
+    :breadcrumbs="navCollection"
+    :routerPath="$route.path"
+    :rootPath="ROOT_PATH"
+  />
+  <div class="cxl-title-h1 q-mt-md q-mb-md">公會通報查詢</div>
 
-    <section class="afy10100__section tbBox2">
-      <h2 class="afy10100__section-title">公會通報查詢</h2>
-      <q-markup-table dense bordered class="afy10100__table">
-        <tbody>
-          <tr>
-            <td class="tbYellow afy10100__label">身份證字號/統一編號</td>
-            <td class="tbYellow2">
-              <div class="afy10100__id-field">
-                <q-input
-                  v-model="inputId"
-                  dense
-                  outlined
-                  :error="!!errors.inputId"
-                  :error-message="errors.inputId"
-                />
-                <q-checkbox
-                  v-if="canReturn"
-                  v-model="syncReturn"
-                  dense
-                  label="同步更新公會回檔狀態"
-                />
-              </div>
-            </td>
-            <td class="tbYellow afy10100__label">契約角色</td>
-            <td class="tbYellow2">
-              <q-select
-                v-model="role"
+  <q-card class="cxl-card q-pa-md q-mb-lg">
+    <q-markup-table
+      class="cxl-table cxl-table-horizontal"
+      separator="cell"
+      flat
+      bordered
+    >
+      <thead>
+        <tr>
+          <th colspan="6" class="cxl-table-header">查詢條件</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th><span class="cxl-text-danger">*</span> 身份證字號/統一編號</th>
+          <td>
+            <div class="row items-center q-gutter-sm no-wrap">
+              <CxlInput
+                v-model="inputId"
+                placeholder="請輸入身份證字號或統一編號"
+                :error="!!errors.inputId"
+                :error-message="errors.inputId"
+              />
+              <q-checkbox
+                v-if="canReturn"
+                v-model="syncReturn"
+                class="cxl-checkbox"
                 dense
-                outlined
+                label="同步更新公會回檔狀態"
+              />
+            </div>
+          </td>
+          <th>契約角色</th>
+          <td>
+            <CxlDropdown
+              v-model="role"
+              :options="ROLE_OPTIONS"
+              emit-value
+              map-options
+            />
+          </td>
+          <th>保單效力</th>
+          <td>
+            <CxlDropdown
+              v-model="status"
+              :options="STATUS_OPTIONS"
+              emit-value
+              map-options
+            />
+          </td>
+        </tr>
+        <tr>
+          <th>姓名</th>
+          <td>{{ dataMap.NAME }}</td>
+          <th>生日</th>
+          <td>{{ dataMap.BIRTHDAY }}</td>
+          <th>公會資料取回日期</th>
+          <td>{{ dataMap.LAST_UPDATE_TIME }}</td>
+        </tr>
+        <tr>
+          <td colspan="6">
+            <div class="row justify-center">
+              <CxlButton label="F2 查詢" @click="query" />
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </q-markup-table>
+  </q-card>
+
+  <q-card class="cxl-card q-pa-md q-mb-lg">
+    <div class="text-h6 q-mb-md">保障項目彙整</div>
+    <q-markup-table
+      class="cxl-table cxl-table-horizontal"
+      separator="cell"
+      flat
+      bordered
+      style="overflow-x: auto;"
+    >
+      <thead>
+        <tr class="cxl-table-header">
+          <template v-for="group in BENEFIT_HEADER_GROUPS" :key="group">
+            <th>項目</th>
+            <th>合計</th>
+            <th>同業合計</th>
+            <th>收件</th>
+            <th>承保</th>
+          </template>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="benefitRow in BENEFIT_ROWS" :key="benefitRow[0].key">
+          <template v-for="benefit in benefitRow" :key="benefit.key">
+            <th>{{ benefit.label }}</th>
+            <td class="text-right">{{ formatNumber(dataMap[`${benefit.key}_Tot`]) }}</td>
+            <td class="text-right">
+              {{ formatNumber(dataMap[`${benefit.key}_TotSame`]) }}
+            </td>
+            <td class="text-right">{{ formatNumber(dataMap[`${benefit.key}_Rr`]) }}</td>
+            <td class="text-right">{{ formatNumber(dataMap[`${benefit.key}_LN`]) }}</td>
+          </template>
+        </tr>
+      </tbody>
+    </q-markup-table>
+  </q-card>
+
+  <q-card class="cxl-card q-pa-md q-mb-lg">
+    <div class="text-h6 q-mb-md">保費資料彙整</div>
+    <q-markup-table
+      class="cxl-table cxl-table-horizontal"
+      separator="cell"
+      flat
+      bordered
+    >
+      <thead>
+        <tr class="cxl-table-header">
+          <template v-for="premium in PREMIUM_ITEMS" :key="premium.key">
+            <th>項目</th>
+            <th>合計</th>
+            <th>收件</th>
+            <th>承保</th>
+          </template>
+          <th>操作者</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <template v-for="premium in PREMIUM_ITEMS" :key="premium.key">
+            <th>{{ premium.label }}</th>
+            <td class="text-right">{{ formatNumber(dataMap[`${premium.key}_Tot`]) }}</td>
+            <td class="text-right">{{ formatNumber(dataMap[`${premium.key}_Rr`]) }}</td>
+            <td class="text-right">{{ formatNumber(dataMap[`${premium.key}_LN`]) }}</td>
+          </template>
+          <td>{{ dataMap.UPDATE_ID }}</td>
+        </tr>
+      </tbody>
+    </q-markup-table>
+  </q-card>
+
+  <q-card v-if="selectedRow" class="cxl-card q-pa-md q-mb-lg">
+    <q-markup-table class="cxl-table-form" separator="horizontal" flat bordered>
+      <colgroup>
+        <template v-for="columnIndex in 5" :key="columnIndex">
+          <col style="width: 10%" />
+          <col style="width: 10%" />
+        </template>
+      </colgroup>
+      <thead>
+        <tr>
+          <th colspan="10" class="cxl-form-title">資料編輯區</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="editRow in EDIT_ROWS" :key="editRow[0].rowKey">
+          <template v-for="field in editRow" :key="field.key">
+            <th v-if="field.kind === 'empty'"></th>
+            <th v-else>{{ field.label }}</th>
+            <td v-if="field.kind === 'empty'"></td>
+            <td v-else>
+              <CxlInput
+                v-if="field.kind === 'input'"
+                v-model="editValues[field.key]"
+              />
+              <CxlDropdown
+                v-else-if="field.kind === 'gender'"
+                v-model="editValues[field.key]"
+                :options="GENDER_OPTIONS"
                 emit-value
                 map-options
-                :options="ROLE_OPTIONS"
               />
-            </td>
-            <td class="tbYellow afy10100__label">保單效力</td>
-            <td class="tbYellow2">
-              <q-select
-                v-model="status"
-                dense
-                outlined
+              <CxlDropdown
+                v-else-if="field.kind === 'payType'"
+                v-model="editValues[field.key]"
+                :options="PAY_TYPE_OPTIONS"
                 emit-value
                 map-options
-                :options="STATUS_OPTIONS"
               />
+              <span v-else>{{ displayEditorValue(field.key) }}</span>
             </td>
-            <td class="tbYellow2 afy10100__action-cell" rowspan="2">
-              <q-btn dense label="F2查詢" @click="query" />
-            </td>
-          </tr>
-          <tr>
-            <td class="tbYellow afy10100__label">姓名</td>
-            <td class="tbYellow2">{{ dataMap.NAME }}</td>
-            <td class="tbYellow afy10100__label">生日</td>
-            <td class="tbYellow2">{{ dataMap.BIRTHDAY }}</td>
-            <td class="tbYellow afy10100__label">公會資料取回日期</td>
-            <td class="tbYellow2">{{ dataMap.LAST_UPDATE_TIME }}</td>
-          </tr>
-        </tbody>
-      </q-markup-table>
-    </section>
+          </template>
+        </tr>
+        <tr>
+          <td colspan="10">
+            <div class="row justify-center q-gutter-sm">
+              <CxlButton label="F9 修改" @click="edit" />
+              <CxlButton label="F10 刪除" theme="danger" @click="remove" />
+              <CxlButton label="取消" theme="primary-outline" @click="cleanEditor" />
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </q-markup-table>
+  </q-card>
 
-    <section class="afy10100__section">
-      <h2 class="afy10100__section-title">保障項目彙整</h2>
-      <q-markup-table dense bordered class="afy10100__table afy10100__summary-table">
-        <thead>
-          <tr>
-            <template v-for="group in BENEFIT_HEADER_GROUPS" :key="group">
-              <th class="tbBlue2">項目</th>
-              <th class="tbBlue">合計</th>
-              <th class="tbBlue">同業合計</th>
-              <th class="tbBlue">收件</th>
-              <th class="tbBlue">承保</th>
-            </template>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="benefitRow in BENEFIT_ROWS" :key="benefitRow[0].key">
-            <template v-for="benefit in benefitRow" :key="benefit.key">
-              <td class="tbBlue2">{{ benefit.label }}</td>
-              <td class="tbYellow2">{{ formatNumber(dataMap[`${benefit.key}_Tot`]) }}</td>
-              <td class="tbYellow2">{{ formatNumber(dataMap[`${benefit.key}_TotSame`]) }}</td>
-              <td class="tbYellow2">{{ formatNumber(dataMap[`${benefit.key}_Rr`]) }}</td>
-              <td class="tbYellow2">{{ formatNumber(dataMap[`${benefit.key}_LN`]) }}</td>
-            </template>
-          </tr>
-        </tbody>
-      </q-markup-table>
-    </section>
+  <q-card class="cxl-card q-pa-md q-mb-lg">
+    <div class="text-h6 q-mb-md">新制通報資料明細</div>
+    <CxlTable
+      v-model:pagination="resultPagination"
+      v-model:selected="selectedRows"
+      :rows="resultRows"
+      :columns="RESULT_COLUMNS"
+      row-key="__rowKey"
+      selection="single"
+      separator="cell"
+      :rows-per-page-options="[0]"
+      hide-bottom
+    >
+      <template #header-selection>選取</template>
+      <template #body-selection="scope">
+        <q-radio v-model="scope.selected" class="cxl-radio" :val="true" dense />
+      </template>
+      <template #body-cell-insrType="props">
+        <q-td :props="props">
+          <CxlButton
+            :label="`${props.row.INSR_TYPE ?? ''} ${insrMap[props.row.INSR_TYPE] ?? ''}`"
+            theme="primary-outline"
+            @click="openDetail(props.row)"
+          />
+        </q-td>
+      </template>
+    </CxlTable>
+    <div v-if="isAllow" class="row justify-center q-mt-md">
+      <CxlButton label="F8 即時取回公會資料" @click="checkBeforeAsync" />
+    </div>
+  </q-card>
 
-    <section class="afy10100__section">
-      <h2 class="afy10100__section-title">保費資料彙整</h2>
-      <q-markup-table dense bordered class="afy10100__table afy10100__summary-table">
-        <thead>
-          <tr>
-            <template v-for="premium in PREMIUM_ITEMS" :key="premium.key">
-              <th class="tbBlue2">項目</th>
-              <th class="tbBlue">合計</th>
-              <th class="tbBlue">收件</th>
-              <th class="tbBlue">承保</th>
-            </template>
-            <th class="tbBlue">操作者</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <template v-for="premium in PREMIUM_ITEMS" :key="premium.key">
-              <td class="tbBlue2">{{ premium.label }}</td>
-              <td class="tbYellow2">{{ formatNumber(dataMap[`${premium.key}_Tot`]) }}</td>
-              <td class="tbYellow2">{{ formatNumber(dataMap[`${premium.key}_Rr`]) }}</td>
-              <td class="tbYellow2">{{ formatNumber(dataMap[`${premium.key}_LN`]) }}</td>
-            </template>
-            <td class="tbYellow2">{{ dataMap.UPDATE_ID }}</td>
-          </tr>
-        </tbody>
-      </q-markup-table>
-    </section>
+  <q-card class="cxl-card q-pa-md">
+    <div class="text-h6 q-mb-md">欄位說明</div>
+    <div
+      v-for="note in NOTES"
+      :key="note"
+      class="q-mb-xs"
+    >
+      {{ note }}
+    </div>
+  </q-card>
 
-    <section v-if="selectedRow" class="afy10100__section">
-      <h2 class="afy10100__section-title">資料編輯區</h2>
-      <q-markup-table dense bordered class="afy10100__table afy10100__editor-table">
-        <tbody>
-          <tr v-for="editRow in EDIT_ROWS" :key="editRow[0].rowKey">
-            <template v-for="field in editRow" :key="field.key">
-              <td v-if="field.kind === 'empty'" class="tbYellow"></td>
-              <td v-else class="tbYellow afy10100__editor-label">{{ field.label }}</td>
+  <CxlModal
+    v-model="showAsyncConfirm"
+    title="確認"
+    cancelText="取消"
+    confirmText="繼續作業"
+    @cancel="showAsyncConfirm = false"
+    @confirm="confirmAsyncRequest"
+  >
+    <p>{{ asyncConfirmMessage }}</p>
+  </CxlModal>
 
-              <td v-if="field.kind === 'empty'" class="tbYellow2"></td>
-              <td v-else class="tbYellow2">
-                <q-input
-                  v-if="field.kind === 'input'"
-                  v-model="editValues[field.key]"
-                  dense
-                  outlined
-                />
-                <q-select
-                  v-else-if="field.kind === 'gender'"
-                  v-model="editValues[field.key]"
-                  dense
-                  outlined
-                  emit-value
-                  map-options
-                  :options="GENDER_OPTIONS"
-                />
-                <q-select
-                  v-else-if="field.kind === 'payType'"
-                  v-model="editValues[field.key]"
-                  dense
-                  outlined
-                  emit-value
-                  map-options
-                  :options="PAY_TYPE_OPTIONS"
-                />
-                <span v-else>{{ displayEditorValue(field.key) }}</span>
-              </td>
-            </template>
-          </tr>
-          <tr>
-            <td class="tbYellow2 afy10100__editor-actions" colspan="10">
-              <q-btn dense label="F9修改" @click="edit" />
-              <q-btn dense label="F10刪除" @click="remove" />
-              <q-btn dense label="取消" @click="cleanEditor" />
-            </td>
-          </tr>
-        </tbody>
-      </q-markup-table>
-    </section>
-
-    <section class="afy10100__section">
-      <h2 class="afy10100__section-title">新制通報資料明細</h2>
-      <q-markup-table dense bordered class="afy10100__table afy10100__detail-table">
-        <thead>
-          <tr>
-            <th class="tbBlue">序號</th>
-            <th class="tbBlue">選取</th>
-            <th class="tbBlue">
-              <button class="afy10100__sort-button" type="button" @click="sortRows('INSR_TYPE')">
-                通報方式<span>{{ sortIndicator("INSR_TYPE") }}</span>
-              </button>
-            </th>
-            <th class="tbBlue">
-              <button class="afy10100__sort-button" type="button" @click="sortRows('COMPANY_NAME')">
-                公司別<span>{{ sortIndicator("COMPANY_NAME") }}</span>
-              </button>
-            </th>
-            <th class="tbBlue">
-              <button class="afy10100__sort-button" type="button" @click="sortRows('POLICY_NO')">
-                保單號碼<span>{{ sortIndicator("POLICY_NO") }}</span>
-              </button>
-            </th>
-            <th class="tbBlue">銷售通路</th>
-            <th class="tbBlue">商品代碼</th>
-            <th class="tbBlue">保單分類</th>
-            <th class="tbBlue">險種分類</th>
-            <th class="tbBlue">
-              <button class="afy10100__sort-button" type="button" @click="sortRows('PROD_KIND')">
-                險種<span>{{ sortIndicator("PROD_KIND") }}</span>
-              </button>
-            </th>
-            <th class="tbBlue">保單狀況</th>
-            <th class="tbBlue">身故保額</th>
-            <th class="tbBlue">醫療限額</th>
-            <th class="tbBlue">醫療日額</th>
-            <th class="tbBlue">
-              <button class="afy10100__sort-button" type="button" @click="sortRows('ISSUE_DATE')">
-                契約生效日<span>{{ sortIndicator("ISSUE_DATE") }}</span>
-              </button>
-            </th>
-            <th class="tbBlue">契約滿期日</th>
-            <th class="tbBlue">要保人姓名</th>
-            <th class="tbBlue">通報時間</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in resultRows" :key="row.__rowKey">
-            <td class="tbYellow2">{{ Number(row.__itemValue) + 1 }}</td>
-            <td class="tbYellow2">
-              <q-radio
-                v-model="selectedRowKey"
-                dense
-                :val="row.__rowKey"
-                @update:model-value="selectRow(row)"
-              />
-            </td>
-            <td class="tbYellow2">
-              <button class="afy10100__detail-button" type="button" @click="openDetail(row)">
-                {{ row.INSR_TYPE }}&nbsp;{{ insrMap[row.INSR_TYPE] }}
-              </button>
-            </td>
-            <td class="tbYellow2">{{ row.COMPANY_NAME }}</td>
-            <td class="tbYellow2">{{ row.POLICY_NO }}</td>
-            <td class="tbYellow2">{{ row.SALE_CHNL }}</td>
-            <td class="tbYellow2">{{ row.PROD_CODE }}</td>
-            <td class="tbYellow2">{{ row.POLICY_CAT }}</td>
-            <td class="tbYellow2">{{ row.POLICY_DUTY }}</td>
-            <td class="tbYellow2">{{ row.PROD_KIND }}</td>
-            <td class="tbYellow2">{{ row.STATUS }}</td>
-            <td class="tbYellow2">{{ formatNumber(row.PAY_AMT1) }}</td>
-            <td class="tbYellow2">{{ formatNumber(row.PAY_AMT6) }}</td>
-            <td class="tbYellow2">{{ formatNumber(row.PAY_AMT8) }}</td>
-            <td class="tbYellow2">{{ row.ISSUE_DATE }}</td>
-            <td class="tbYellow2">{{ row.LPS_DATE }}</td>
-            <td class="tbYellow2">{{ row.A_NAME }}</td>
-            <td class="tbYellow2">{{ row.UPDATE_TIME }}</td>
-          </tr>
-          <tr v-if="isAllow">
-            <td class="tbYellow2 afy10100__async-action" colspan="18">
-              <q-btn dense label="F8即時取回公會資料" @click="checkBeforeAsync" />
-            </td>
-          </tr>
-        </tbody>
-      </q-markup-table>
-    </section>
-
-    <section class="afy10100__section">
-      <q-markup-table dense bordered class="afy10100__table">
-        <tbody>
-          <tr v-for="note in NOTES" :key="note">
-            <td class="tbYellow3">{{ note }}</td>
-          </tr>
-        </tbody>
-      </q-markup-table>
-    </section>
-
-    <q-dialog v-model="showDetail">
-      <q-card>
-        <q-card-section>
-          <!-- TODO: PENDING_CONVERSION: AFY10100ShowDetail -->
-          <!-- <AFY10100ShowDetail v-bind="detailParams" /> -->
-        </q-card-section>
-      </q-card>
-    </q-dialog>
-  </div>
+  <CxlModal v-model="showDetail" title="通報資料明細" size="lg" content-scroll>
+    <!-- TODO: PENDING_CONVERSION: AFY10100ShowDetail -->
+    <!-- <AFY10100ShowDetail v-bind="detailParams" /> -->
+    <div class="cxl-text-gray-a7 text-center q-pa-lg">明細元件尚待轉換</div>
+  </CxlModal>
 </template>
 
 <script setup>
-import { computed, inject, onBeforeUnmount, onMounted, reactive, ref } from "vue";
-import { useQuasar } from "quasar";
+import { computed, inject, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { useField, useForm } from "vee-validate";
 import { object, string } from "yup";
+import {
+  CxlBreadcrumbs,
+  CxlButton,
+  CxlDropdown,
+  CxlInput,
+  CxlModal,
+  CxlTable,
+} from "vue-cathaylife-component";
+import afy10100Service from "@/service/AFY10100Service.js";
+import navCollection from "@/service/NavCollection.js";
 
 const $cathayAxios = inject("$cathayAxios");
-const $q = useQuasar();
+const $route = useRoute();
+const ROOT_PATH = { label: "首頁", url: "/" };
 
 const ROLE_OPTIONS = [
   { label: "被保人", value: "I" },
@@ -487,6 +480,15 @@ const DETAIL_KEYS = [
   "SALE_CHNL",
   "PROD_CODE",
 ];
+const RESULT_ROW_FIELD_ALIASES = {
+  iid: "I_ID",
+  ibirthday: "I_BIRTHDAY",
+  igender: "I_GENDER",
+  aid: "A_ID",
+  abirthday: "A_BIRTHDAY",
+  aname: "A_NAME",
+  iname: "I_NAME",
+};
 const NOTES = [
   "1. 銷售通路:1網路投保 2業務員3保經、保代 4電話行銷 5機場櫃檯",
   "2. 保單分類：1個人；2團體",
@@ -501,6 +503,84 @@ const NUMBER_FORMATTER = new Intl.NumberFormat("zh-TW", {
   maximumFractionDigits: 0,
 });
 
+/**
+ * 將金額格式化為千分位字串。
+ *
+ * @param {string|number|null|undefined} value - 待格式化金額
+ * @returns {string} 格式化後的金額
+ */
+const formatNumber = (value) => {
+  if (value === null || value === undefined || value === "") return "";
+  return NUMBER_FORMATTER.format(value);
+};
+
+const RESULT_COLUMNS = [
+  {
+    name: "index",
+    label: "序號",
+    field: (row) => Number(row.__itemValue) + 1,
+    align: "center",
+  },
+  { name: "insrType", label: "通報方式", field: "INSR_TYPE", align: "center", sortable: true },
+  {
+    name: "companyName",
+    label: "公司別",
+    field: "COMPANY_NAME",
+    align: "center",
+    sortable: true,
+  },
+  {
+    name: "policyNo",
+    label: "保單號碼",
+    field: "POLICY_NO",
+    align: "center",
+    sortable: true,
+  },
+  { name: "saleChnl", label: "銷售通路", field: "SALE_CHNL", align: "center" },
+  { name: "prodCode", label: "商品代碼", field: "PROD_CODE", align: "center" },
+  { name: "policyCat", label: "保單分類", field: "POLICY_CAT", align: "center" },
+  { name: "policyDuty", label: "險種分類", field: "POLICY_DUTY", align: "center" },
+  {
+    name: "prodKind",
+    label: "險種",
+    field: "PROD_KIND",
+    align: "center",
+    sortable: true,
+  },
+  { name: "status", label: "保單狀況", field: "STATUS", align: "center" },
+  {
+    name: "payAmt1",
+    label: "身故保額",
+    field: "PAY_AMT1",
+    align: "right",
+    format: formatNumber,
+  },
+  {
+    name: "payAmt6",
+    label: "醫療限額",
+    field: "PAY_AMT6",
+    align: "right",
+    format: formatNumber,
+  },
+  {
+    name: "payAmt8",
+    label: "醫療日額",
+    field: "PAY_AMT8",
+    align: "right",
+    format: formatNumber,
+  },
+  {
+    name: "issueDate",
+    label: "契約生效日",
+    field: "ISSUE_DATE",
+    align: "center",
+    sortable: true,
+  },
+  { name: "lpsDate", label: "契約滿期日", field: "LPS_DATE", align: "center" },
+  { name: "applicantName", label: "要保人姓名", field: "A_NAME", align: "center" },
+  { name: "updateTime", label: "通報時間", field: "UPDATE_TIME", align: "center" },
+];
+
 const asyncSchema = object({
   inputId: string().required("身份證字號/統一編號：不得為空值"),
 });
@@ -510,47 +590,53 @@ const { errors, setValues, validate } = useForm({
   validateOnMount: false,
 });
 const { value: inputId } = useField("inputId", undefined, {
-  validateOnValueUpdate: false,
+  validateOnValueUpdate: true,
 });
 
 const role = ref("I");
 const status = ref("Y");
-const canReturn = ref(true);
-const syncReturn = ref(true);
-const isAllow = ref(true);
+const canReturn = ref(false);
+const syncReturn = ref(false);
+const isAllow = ref(false);
 const dataMap = ref({});
 const resultRows = ref([]);
+const resultPagination = ref({ page: 1, rowsPerPage: 0 });
+const selectedRows = ref([]);
 const insrMap = ref({});
 const oiuIndDesc = ref({});
 const saleChnlDesc = ref({});
-const selectedRowKey = ref("");
-const showDetail = ref(true);
+const showDetail = ref(false);
+const showAsyncConfirm = ref(false);
+const asyncConfirmMessage = ref("");
 const detailParams = ref({});
-const sortDirections = reactive({});
 const editValues = reactive(
   Object.fromEntries(EDITOR_KEYS.map((key) => [key, ""])),
 );
 editValues.I_GENDER = "1";
 editValues.PAY_TYPE = "0";
 
-const selectedRow = computed(
-  () => resultRows.value.find((row) => row.__rowKey === selectedRowKey.value) ?? null,
-);
+const selectedRow = computed(() => selectedRows.value[0] ?? null);
 
-const formatNumber = (value) => {
-  if (value === null || value === undefined || value === "") return "";
-  return NUMBER_FORMATTER.format(value);
-};
-
+/**
+ * 清除編輯區並取消資料列選取。
+ *
+ * @returns {void}
+ */
 const resetEditorForPage = () => {
   EDITOR_KEYS.forEach((key) => {
     editValues[key] = "";
   });
   editValues.I_GENDER = "1";
   editValues.PAY_TYPE = "0";
-  selectedRowKey.value = "";
+  selectedRows.value = [];
 };
 
+/**
+ * 將後端頁面資料映射至查詢條件、彙整與明細區。
+ *
+ * @param {object} pageData - AFY10100 頁面回傳資料
+ * @returns {void}
+ */
 const applyPageData = (pageData) => {
   setValues({ inputId: pageData.inputId ?? "" });
   role.value = pageData.role ?? "I";
@@ -559,19 +645,34 @@ const applyPageData = (pageData) => {
   syncReturn.value = false;
   isAllow.value = pageData.isAllow === true || pageData.isAllow === "true";
   dataMap.value = pageData.dataMap ?? {};
-  insrMap.value = pageData.INSRMAP ?? {};
+  insrMap.value = pageData.insrMap ?? {};
   oiuIndDesc.value = pageData.oiuIndDesc ?? {};
   saleChnlDesc.value = pageData.saleChnlDesc ?? {};
-  resultRows.value = (pageData.resultList ?? []).map((row, index) => ({
-    ...row,
-    __itemValue: String(index),
-    __rowKey: `${row.TBL_NAME ?? ""}-${row.SER_NO ?? ""}-${row.POLICY_NO ?? ""}-${index}`,
-  }));
+  resultRows.value = (pageData.resultList ?? []).map((row, index) => {
+    const normalizedRow = Object.fromEntries(
+      Object.entries(row).map(([key, value]) => [
+        RESULT_ROW_FIELD_ALIASES[key] ??
+          key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toUpperCase(),
+        value,
+      ]),
+    );
+    return {
+      ...row,
+      ...normalizedRow,
+      __itemValue: String(index),
+      __rowKey: `${normalizedRow.TBL_NAME ?? ""}-${normalizedRow.SER_NO ?? ""}-${normalizedRow.POLICY_NO ?? ""}-${index}`,
+    };
+  });
   resetEditorForPage();
-  editValues.I_GENDER = pageData.I_GENDER ?? "1";
-  editValues.PAY_TYPE = pageData.PAY_TYPE ?? "0";
+  editValues.I_GENDER = pageData.igender ?? "1";
+  editValues.PAY_TYPE = pageData.payType ?? "0";
 };
 
+/**
+ * 建立 AFY10100 共用請求資料。
+ *
+ * @returns {object} API 請求資料
+ */
 const buildFormRequest = () => {
   const request = {
     inputId: inputId.value,
@@ -584,62 +685,127 @@ const buildFormRequest = () => {
   return request;
 };
 
-const submitPageAction = async (action) => {
-  const res = await $cathayAxios.post(`afy10100/${action}`, buildFormRequest());
-  if (res.returnCode !== 0) return;
-  applyPageData(res.data);
+/**
+ * 依目前 CathayAxios 執行模式解析成功回應資料。
+ *
+ * @param {object} response - CathayAxios 回應
+ * @returns {object|null} 成功資料；失敗時回傳 null
+ */
+const resolveResponseData = (response) => {
+  if (typeof response?.returnCode === "number") {
+    return response.returnCode === 0 ? response.data : null;
+  }
+  if (response?.ErrMsg) {
+    return Number(response.ErrMsg.returnCode) === 0 && !response.jsonData?.error
+      ? response.jsonData
+      : null;
+  }
+  return null;
 };
 
+/**
+ * 送出頁面操作並套用回傳資料。
+ *
+ * @param {string} endpoint - AFY10100 API endpoint
+ * @returns {Promise<void>}
+ */
+const submitPageAction = async (endpoint) => {
+  const { valid } = await validate()
+  if (!valid) return
+  const response = await $cathayAxios.post(endpoint, buildFormRequest());
+  const responseData = resolveResponseData(response);
+  if (!responseData) return;
+  applyPageData(responseData);
+};
+
+/**
+ * 查詢公會通報資料。
+ *
+ * @returns {Promise<void>}
+ */
 const query = async () => {
-  await submitPageAction("query");
+  await submitPageAction(afy10100Service.query);
 };
 
+/**
+ * 修改目前選取的通報資料。
+ *
+ * @returns {Promise<void>}
+ */
 const edit = async () => {
-  await submitPageAction("edit");
+  await submitPageAction(afy10100Service.edit);
 };
 
+/**
+ * 刪除目前選取的通報資料。
+ *
+ * @returns {Promise<void>}
+ */
 const remove = async () => {
-  await submitPageAction("delete");
+  await submitPageAction(afy10100Service.delete);
 };
 
+/**
+ * 即時取回公會資料。
+ *
+ * @returns {Promise<void>}
+ */
 const runAsync = async () => {
-  await submitPageAction("async");
+  await submitPageAction(afy10100Service.async);
 };
 
+/**
+ * 驗證輸入值並確認是否可即時取回公會資料。
+ *
+ * @returns {Promise<void>}
+ */
 const checkBeforeAsync = async () => {
   const { valid } = await validate({ schema: asyncSchema });
   if (!valid) return;
 
-  const res = await $cathayAxios.post("afy10100/asynccheckid", {
+  const response = await $cathayAxios.post(afy10100Service.asyncCheckId, {
     inputId: inputId.value,
   });
-  if (res.returnCode !== 0) return;
+  const responseData = resolveResponseData(response);
+  if (!responseData) return;
 
-  if (res.data.isIdError === "Y") {
-    $q.dialog({
-      title: "確認",
-      message: `輸入值 ${inputId.value} 不符身份證/統一證號檢核規則，請確認，是否要繼續作業?`,
-      cancel: true,
-    }).onOk(runAsync);
+  if (responseData.isIdError === "Y") {
+    asyncConfirmMessage.value =
+      `輸入值 ${inputId.value} 不符身份證/統一證號檢核規則，請確認是否繼續作業？`;
+    showAsyncConfirm.value = true;
     return;
   }
   await runAsync();
 };
 
-const selectRow = (row) => {
-  selectedRowKey.value = row.__rowKey;
-  EDITOR_KEYS.forEach((key) => {
-    editValues[key] = row[key] ?? "";
-  });
+/**
+ * 確認忽略證號格式檢核並執行即時取回。
+ *
+ * @returns {Promise<void>}
+ */
+const confirmAsyncRequest = async () => {
+  showAsyncConfirm.value = false;
+  await runAsync();
 };
 
+/**
+ * 清除資料編輯區。
+ *
+ * @returns {void}
+ */
 const cleanEditor = () => {
   EDITOR_KEYS.forEach((key) => {
     editValues[key] = "";
   });
-  selectedRowKey.value = "";
+  selectedRows.value = [];
 };
 
+/**
+ * 取得編輯區唯讀欄位顯示值。
+ *
+ * @param {string} key - 欄位名稱
+ * @returns {string} 顯示值
+ */
 const displayEditorValue = (key) => {
   if (key === "UPDATE_TIME") return selectedRow.value?.INPUT_TIME ?? "";
   if (key === "OIU_IND") return oiuIndDesc.value[selectedRow.value?.OIU_IND] ?? "";
@@ -648,18 +814,12 @@ const displayEditorValue = (key) => {
   return editValues[key] ?? "";
 };
 
-const sortRows = (key) => {
-  sortDirections[key] = sortDirections[key] !== "asc" ? "asc" : "desc";
-  const direction = sortDirections[key] === "asc" ? 1 : -1;
-  resultRows.value.sort((left, right) => {
-    const leftValue = String(left[key] ?? "").toUpperCase();
-    const rightValue = String(right[key] ?? "").toUpperCase();
-    return leftValue.localeCompare(rightValue) * direction;
-  });
-};
-
-const sortIndicator = (key) => (sortDirections[key] === "asc" ? "▲" : "▼");
-
+/**
+ * 開啟尚待轉換的明細元件 placeholder。
+ *
+ * @param {object} row - 選取的通報資料
+ * @returns {void}
+ */
 const openDetail = (row) => {
   detailParams.value = Object.fromEntries(
     DETAIL_KEYS.map((key) => [key, row[key] ?? ""]),
@@ -667,6 +827,12 @@ const openDetail = (row) => {
   showDetail.value = true;
 };
 
+/**
+ * 處理頁面功能鍵。
+ *
+ * @param {KeyboardEvent} event - 鍵盤事件
+ * @returns {void}
+ */
 const handleHotKey = (event) => {
   const actions = {
     F2: query,
@@ -680,7 +846,14 @@ const handleHotKey = (event) => {
   action();
 };
 
-onMounted(async () => {
+watch(selectedRows, ([row]) => {
+  if (!row) return;
+  EDITOR_KEYS.forEach((key) => {
+    editValues[key] = row[key] ?? "";
+  });
+});
+
+onMounted(() => {
   window.addEventListener("keydown", handleHotKey);
 });
 
@@ -688,115 +861,3 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleHotKey);
 });
 </script>
-
-<style scoped>
-.afy10100 {
-  min-height: 100%;
-  padding: 0 4px 16px;
-  background-color: #f0fbc6;
-}
-
-.afy10100__header {
-  position: sticky;
-  top: 0;
-  z-index: 9;
-  display: flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 2px 8px;
-  background-color: #f0fbc6;
-}
-
-.afy10100__header-dot {
-  margin-right: 8px;
-  font-size: 8px;
-}
-
-.afy10100__screen-id {
-  margin-left: auto;
-}
-
-.afy10100__section {
-  width: 97%;
-  margin: 8px auto 0;
-}
-
-.afy10100__section-title {
-  margin: 0;
-  padding: 4px 6px;
-  font-size: 1rem;
-  font-weight: 400;
-}
-
-.afy10100__table {
-  width: 100%;
-  table-layout: auto;
-}
-
-.afy10100__table th,
-.afy10100__table td {
-  padding: 4px;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.afy10100__summary-table th,
-.afy10100__summary-table td,
-.afy10100__editor-table th,
-.afy10100__editor-table td {
-  text-align: center;
-}
-
-.afy10100__label {
-  width: 8%;
-}
-
-.afy10100__id-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.afy10100__id-field .q-input {
-  min-width: 220px;
-}
-
-.afy10100__action-cell,
-.afy10100__async-action,
-.afy10100__editor-actions {
-  text-align: center;
-}
-
-.afy10100__editor-label {
-  width: 10%;
-}
-
-.afy10100__editor-table td {
-  width: 10%;
-}
-
-.afy10100__editor-actions .q-btn + .q-btn {
-  margin-left: 8px;
-}
-
-.afy10100__detail-table {
-  min-width: 1500px;
-}
-
-.afy10100__sort-button,
-.afy10100__detail-button {
-  padding: 0;
-  border: 0;
-  color: inherit;
-  font: inherit;
-  text-decoration: underline;
-  background: transparent;
-  cursor: pointer;
-}
-
-.afy10100__detail-table th,
-.afy10100__detail-table td {
-  text-align: center;
-  white-space: nowrap;
-}
-</style>
