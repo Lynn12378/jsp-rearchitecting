@@ -52,6 +52,11 @@ const routes = [
         name: "ATA08120",
         component: () => import("@/views/A0/ATA08120.vue"),
       },
+      {
+        path: "DSA00200",
+        name: "DSA00200",
+        component: () => import("@/views/A0/DSA00200.vue"),
+      },
     ],
   },
 ];
